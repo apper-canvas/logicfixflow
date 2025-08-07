@@ -268,9 +268,10 @@ export const getClients = clientService.getClients;
 export const createClient = clientService.createClient;
 export const updateClient = clientService.updateClient;
 export const deleteClient = clientService.deleteClient;
-export const filterClients = clientService.filterClients;
-export const searchClients = clientService.searchClients;
-export const getClientStats = clientService.getClientStats;
-export const addCommunication = clientService.addCommunication;
-
+// Named exports for individual methods
+export const getClients = clientService.getAll;
+export const getClientById = clientService.getById;
+export const createClient = clientService.create;
+export const updateClient = clientService.update;
+export const deleteClient = clientService.delete;
 export default clientService;
