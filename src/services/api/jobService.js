@@ -39,13 +39,33 @@ async getAll(filters = {}) {
 
 async create(jobData) {
   await delay(400);
+  
+  // Calculate estimated cost and duration from service if provided
+  let estimatedCost = jobData.estimatedCost || null;
+  let estimatedDuration = jobData.estimatedDuration || null;
+  
+  if (jobData.serviceId && !estimatedCost) {
+    // Import service data to calculate estimates
+    const { getServiceById } = await import("@/services/api/serviceService");
+    const service = getServiceById(jobData.serviceId);
+    if (service) {
+      estimatedDuration = service.estimatedDuration;
+      if (service.pricingType === 'flat') {
+        estimatedCost = service.flatRate;
+      } else if (service.pricingType === 'hourly') {
+        estimatedCost = service.hourlyRate * (service.estimatedDuration || 1);
+      }
+    }
+  }
+  
   const newJob = {
     ...jobData,
     Id: Math.max(...this.jobs.map(j => j.Id)) + 1,
     createdAt: new Date().toISOString(),
     status: jobData.status || "Scheduled",
-    estimatedCost: jobData.estimatedCost || null,
-    estimatedDuration: jobData.estimatedDuration || null,
+    estimatedCost: jobData.price ? parseFloat(jobData.price) : estimatedCost,
+    estimatedDuration: estimatedDuration,
+    serviceId: jobData.serviceId || null,
     services: jobData.services || [],
     notes: [],
     photos: []

@@ -3,48 +3,105 @@ import { toast } from "react-toastify";
 import { format } from "date-fns";
 import JobNotesPhotos from "./JobNotesPhotos";
 import { jobService } from "@/services/api/jobService";
+import { getServices } from "@/services/api/serviceService";
 import ApperIcon from "@/components/ApperIcon";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
-
 const JobFormModal = ({ isOpen, onClose, job = null }) => {
   const [formData, setFormData] = useState({
     clientName: "",
     phone: "",
     address: "",
     serviceType: "",
+    serviceId: "",
     description: "",
     scheduledDate: "",
     price: ""
-});
+  });
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [services, setServices] = useState([]);
+  const [selectedService, setSelectedService] = useState(null);
+  const [servicesLoading, setServicesLoading] = useState(false);
+
+  // Fetch services on component mount
+  useEffect(() => {
+    const fetchServices = async () => {
+      setServicesLoading(true);
+      try {
+        const serviceData = getServices();
+        const activeServices = serviceData.filter(service => service.isActive);
+        setServices(activeServices);
+      } catch (error) {
+        toast.error("Failed to load services");
+        console.error("Error fetching services:", error);
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchServices();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
-if (job) {
+    if (job) {
       setFormData({
         clientName: job.clientName || "",
         phone: job.phone || "",
         address: job.address || "",
         serviceType: job.serviceType || "",
+        serviceId: job.serviceId || "",
         description: job.description || "",
         scheduledDate: job.scheduledDate ? format(new Date(job.scheduledDate), "yyyy-MM-dd") : "",
         price: job.price || ""
       });
+      
+      // Find and set selected service if editing
+      if (job.serviceId) {
+        const service = services.find(s => s.Id === job.serviceId);
+        setSelectedService(service || null);
+      }
+      
       // Show notes & photos tab if editing existing job
       if (job.Id) {
         setActiveTab('details');
       }
     }
-  }, [job]);
+  }, [job, services]);
 
-  const handleChange = (e) => {
+const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'serviceType') {
+      // Find the selected service
+      const service = services.find(s => s.name === value);
+      setSelectedService(service || null);
+      
+      // Calculate suggested price based on service pricing
+      let suggestedPrice = "";
+      if (service) {
+        if (service.pricingType === 'flat') {
+          suggestedPrice = service.flatRate.toString();
+        } else if (service.pricingType === 'hourly' && service.estimatedDuration) {
+          suggestedPrice = (service.hourlyRate * service.estimatedDuration).toString();
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        serviceId: service ? service.Id : "",
+        price: suggestedPrice || prev.price
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -78,10 +135,8 @@ const handleTabChange = (tab) => {
     }
   };
 
-  const serviceTypes = [
-    "Plumbing", "Electrical", "HVAC", "Carpentry", "Painting", 
-    "Roofing", "Flooring", "Appliance Repair", "General Maintenance"
-  ];
+// Service types are now dynamic from the services array
+  const availableServices = services.map(service => service.name);
 
   if (!isOpen) return null;
 
@@ -184,7 +239,7 @@ const handleTabChange = (tab) => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+<div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Service Type *
                   </label>
@@ -193,13 +248,34 @@ const handleTabChange = (tab) => {
                     value={formData.serviceType}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 bg-white text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none transition-colors duration-200"
+                    disabled={servicesLoading}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 bg-white text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none transition-colors duration-200 disabled:bg-slate-50 disabled:text-slate-400"
                   >
-                    <option value="">Select service type</option>
-                    {serviceTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    <option value="">
+                      {servicesLoading ? "Loading services..." : "Select service type"}
+                    </option>
+                    {availableServices.map(serviceName => (
+                      <option key={serviceName} value={serviceName}>{serviceName}</option>
                     ))}
                   </select>
+                  {selectedService && (
+                    <div className="mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="text-sm text-slate-600 mb-1">
+                        <strong>Service Details:</strong>
+                      </div>
+                      <div className="text-sm text-slate-700 mb-1">
+                        {selectedService.description}
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        <strong>Category:</strong> {selectedService.category} | 
+                        <strong> Estimated Duration:</strong> {selectedService.estimatedDuration}h | 
+                        <strong> Pricing:</strong> {selectedService.pricingType === 'flat' 
+                          ? `$${selectedService.flatRate} flat rate`
+                          : `$${selectedService.hourlyRate}/hour`
+                        }
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -219,6 +295,14 @@ const handleTabChange = (tab) => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Estimated Price
+                  {selectedService && (
+                    <span className="text-sm text-slate-500 ml-1">
+                      (Suggested: ${selectedService.pricingType === 'flat' 
+                        ? selectedService.flatRate 
+                        : selectedService.hourlyRate * (selectedService.estimatedDuration || 1)
+                      })
+                    </span>
+                  )}
                 </label>
                 <Input
                   name="price"
@@ -227,8 +311,17 @@ const handleTabChange = (tab) => {
                   min="0"
                   value={formData.price}
                   onChange={handleChange}
-                  placeholder="0.00"
+                  placeholder={selectedService 
+                    ? (selectedService.pricingType === 'flat' 
+                        ? selectedService.flatRate.toString()
+                        : (selectedService.hourlyRate * (selectedService.estimatedDuration || 1)).toString()
+                      )
+                    : "0.00"
+                  }
                 />
+                <div className="mt-1 text-xs text-slate-500">
+                  Leave empty to use suggested pricing, or enter a custom amount to override.
+                </div>
               </div>
 
               <div>
