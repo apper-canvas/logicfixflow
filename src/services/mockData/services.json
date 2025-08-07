@@ -1,0 +1,222 @@
+[
+  {
+    "Id": 1,
+    "name": "Faucet Repair",
+    "category": "Plumbing",
+    "description": "Fix leaky faucets, replace washers and seals",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 85,
+    "estimatedDuration": 1.5,
+    "isActive": true
+  },
+  {
+    "Id": 2,
+    "name": "Toilet Installation",
+    "category": "Plumbing",
+    "description": "Complete toilet removal and installation",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 250,
+    "estimatedDuration": 3,
+    "isActive": true
+  },
+  {
+    "Id": 3,
+    "name": "Drain Cleaning",
+    "category": "Plumbing",
+    "description": "Clear clogged drains and pipes",
+    "pricingType": "hourly",
+    "hourlyRate": 65,
+    "flatRate": null,
+    "estimatedDuration": 2,
+    "isActive": true
+  },
+  {
+    "Id": 4,
+    "name": "Water Heater Repair",
+    "category": "Plumbing",
+    "description": "Diagnose and repair water heater issues",
+    "pricingType": "hourly",
+    "hourlyRate": 75,
+    "flatRate": null,
+    "estimatedDuration": 4,
+    "isActive": true
+  },
+  {
+    "Id": 5,
+    "name": "Electrical Outlet Installation",
+    "category": "Electrical",
+    "description": "Install new electrical outlets and switches",
+    "pricingType": "hourly",
+    "hourlyRate": 45,
+    "flatRate": null,
+    "estimatedDuration": 1,
+    "isActive": true
+  },
+  {
+    "Id": 6,
+    "name": "Light Fixture Installation",
+    "category": "Electrical",
+    "description": "Install ceiling lights, chandeliers, and fixtures",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 125,
+    "estimatedDuration": 2,
+    "isActive": true
+  },
+  {
+    "Id": 7,
+    "name": "Electrical Panel Upgrade",
+    "category": "Electrical",
+    "description": "Upgrade electrical panels and circuit breakers",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 850,
+    "estimatedDuration": 6,
+    "isActive": true
+  },
+  {
+    "Id": 8,
+    "name": "Ceiling Fan Installation",
+    "category": "Electrical",
+    "description": "Install and wire ceiling fans",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 175,
+    "estimatedDuration": 2.5,
+    "isActive": true
+  },
+  {
+    "Id": 9,
+    "name": "Kitchen Cabinet Installation",
+    "category": "Carpentry",
+    "description": "Install custom kitchen cabinets",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 350,
+    "estimatedDuration": 8,
+    "isActive": true
+  },
+  {
+    "Id": 10,
+    "name": "Deck Repair",
+    "category": "Carpentry",
+    "description": "Repair and replace deck boards and railings",
+    "pricingType": "hourly",
+    "hourlyRate": 55,
+    "flatRate": null,
+    "estimatedDuration": 6,
+    "isActive": true
+  },
+  {
+    "Id": 11,
+    "name": "Door Installation",
+    "category": "Carpentry",
+    "description": "Install interior and exterior doors",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 275,
+    "estimatedDuration": 4,
+    "isActive": true
+  },
+  {
+    "Id": 12,
+    "name": "Trim and Molding",
+    "category": "Carpentry",
+    "description": "Install baseboards, crown molding, and trim",
+    "pricingType": "hourly",
+    "hourlyRate": 50,
+    "flatRate": null,
+    "estimatedDuration": 4,
+    "isActive": true
+  },
+  {
+    "Id": 13,
+    "name": "Interior Room Painting",
+    "category": "Painting",
+    "description": "Paint interior walls and ceilings",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 425,
+    "estimatedDuration": 8,
+    "isActive": true
+  },
+  {
+    "Id": 14,
+    "name": "Exterior House Painting",
+    "category": "Painting",
+    "description": "Paint exterior siding and trim",
+    "pricingType": "hourly",
+    "hourlyRate": 40,
+    "flatRate": null,
+    "estimatedDuration": 16,
+    "isActive": true
+  },
+  {
+    "Id": 15,
+    "name": "Drywall Repair",
+    "category": "Painting",
+    "description": "Patch holes and repair drywall damage",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 95,
+    "estimatedDuration": 2,
+    "isActive": true
+  },
+  {
+    "Id": 16,
+    "name": "Cabinet Refinishing",
+    "category": "Painting",
+    "description": "Sand and refinish kitchen cabinets",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 650,
+    "estimatedDuration": 12,
+    "isActive": true
+  },
+  {
+    "Id": 17,
+    "name": "Appliance Installation",
+    "category": "General Repair",
+    "description": "Install dishwashers, washers, dryers",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 125,
+    "estimatedDuration": 2,
+    "isActive": true
+  },
+  {
+    "Id": 18,
+    "name": "Window Screen Repair",
+    "category": "General Repair",
+    "description": "Repair or replace window screens",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 35,
+    "estimatedDuration": 0.5,
+    "isActive": true
+  },
+  {
+    "Id": 19,
+    "name": "Tile Repair",
+    "category": "General Repair",
+    "description": "Replace broken tiles and regrout",
+    "pricingType": "hourly",
+    "hourlyRate": 55,
+    "flatRate": null,
+    "estimatedDuration": 3,
+    "isActive": true
+  },
+  {
+    "Id": 20,
+    "name": "Gutter Cleaning",
+    "category": "General Repair",
+    "description": "Clean and inspect gutters and downspouts",
+    "pricingType": "flat",
+    "hourlyRate": null,
+    "flatRate": 150,
+    "estimatedDuration": 3,
+    "isActive": true
+  }
+]
