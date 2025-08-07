@@ -181,6 +181,139 @@ async update(id, updateData) {
     
     job.photos = job.photos.filter(photo => photo.Id !== photoId);
     return await this.update(jobId, { photos: job.photos });
+}
+
+  // Print and Email estimate methods
+  async printEstimate(estimateData) {
+    await delay(200);
+    
+    const { selectedServices, estimate, totalDuration } = estimateData;
+    const suggestedTotal = estimate * 1.15;
+    
+    const printContent = `
+      <html>
+        <head>
+          <title>Service Estimate</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+            .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+            .company { font-size: 24px; font-weight: bold; color: #2563eb; }
+            .title { font-size: 20px; margin: 20px 0; }
+            .service-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
+            .totals { border-top: 2px solid #333; padding-top: 15px; margin-top: 20px; }
+            .total-line { display: flex; justify-content: space-between; margin: 5px 0; }
+            .final-total { font-size: 18px; font-weight: bold; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; }
+            .footer { margin-top: 40px; font-size: 12px; color: #666; }
+            @media print { body { margin: 20px; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company">FixFlow Pro</div>
+            <div>Professional Service Estimate</div>
+            <div>Date: ${new Date().toLocaleDateString()}</div>
+          </div>
+          
+          <div class="title">Service Breakdown</div>
+          
+          ${selectedServices.map(service => {
+            const serviceTotal = service.pricingType === 'hourly'
+              ? service.hourlyRate * service.estimatedDuration * service.quantity
+              : service.flatRate * service.quantity;
+            
+            return `
+              <div class="service-item">
+                <div>
+                  <strong>${service.name}</strong> (Qty: ${service.quantity})<br>
+                  <small>${service.description}</small><br>
+                  <small>${service.pricingType === 'hourly' 
+                    ? `$${service.hourlyRate}/hr × ${service.estimatedDuration}hrs` 
+                    : `$${service.flatRate} flat rate`}</small>
+                </div>
+                <div>$${serviceTotal.toFixed(2)}</div>
+              </div>
+            `;
+          }).join('')}
+          
+          <div class="totals">
+            <div class="total-line">
+              <span>Labor Cost:</span>
+              <span>$${estimate.toFixed(2)}</span>
+            </div>
+            <div class="total-line">
+              <span>Estimated Duration:</span>
+              <span>${totalDuration.toFixed(1)} hours</span>
+            </div>
+            <div class="total-line">
+              <span>Materials & Overhead (15%):</span>
+              <span>$${(suggestedTotal - estimate).toFixed(2)}</span>
+            </div>
+            <div class="final-total">
+              <span>Suggested Total:</span>
+              <span>$${suggestedTotal.toFixed(2)}</span>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p>This estimate is valid for 30 days. Actual costs may vary based on site conditions and material availability.</p>
+            <p>Thank you for choosing FixFlow Pro for your service needs!</p>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+    
+    return { success: true, message: 'Estimate sent to printer' };
+  }
+
+  async emailEstimate(estimateData) {
+    await delay(200);
+    
+    const { selectedServices, estimate, totalDuration } = estimateData;
+    const suggestedTotal = estimate * 1.15;
+    
+    const servicesList = selectedServices.map(service => {
+      const serviceTotal = service.pricingType === 'hourly'
+        ? service.hourlyRate * service.estimatedDuration * service.quantity
+        : service.flatRate * service.quantity;
+      
+      return `• ${service.name} (Qty: ${service.quantity}) - ${service.pricingType === 'hourly' 
+        ? `$${service.hourlyRate}/hr × ${service.estimatedDuration}hrs` 
+        : `$${service.flatRate} flat rate`} = $${serviceTotal.toFixed(2)}`;
+    }).join('\n');
+    
+    const emailSubject = encodeURIComponent('Service Estimate from FixFlow Pro');
+    const emailBody = encodeURIComponent(`Dear Valued Customer,
+
+Please find your service estimate below:
+
+SERVICE BREAKDOWN:
+${servicesList}
+
+ESTIMATE SUMMARY:
+Labor Cost: $${estimate.toFixed(2)}
+Estimated Duration: ${totalDuration.toFixed(1)} hours
+Materials & Overhead (15%): $${(suggestedTotal - estimate).toFixed(2)}
+-----------------------------------------
+SUGGESTED TOTAL: $${suggestedTotal.toFixed(2)}
+
+This estimate is valid for 30 days. Actual costs may vary based on site conditions and material availability.
+
+To schedule this service or discuss any questions, please contact us directly.
+
+Thank you for choosing FixFlow Pro!
+
+Best regards,
+FixFlow Pro Team`);
+    
+    const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+    window.open(mailtoLink);
+    
+    return { success: true, message: 'Email client opened with estimate' };
   }
 }
 
@@ -208,3 +341,5 @@ export const updateNote = (jobId, noteId, noteText) => jobService.updateNote(job
 export const deleteNote = (jobId, noteId) => jobService.deleteNote(jobId, noteId);
 export const addPhoto = (jobId, photoData) => jobService.addPhoto(jobId, photoData);
 export const deletePhoto = (jobId, photoId) => jobService.deletePhoto(jobId, photoId);
+export const printEstimate = (estimateData) => jobService.printEstimate(estimateData);
+export const emailEstimate = (estimateData) => jobService.emailEstimate(estimateData);

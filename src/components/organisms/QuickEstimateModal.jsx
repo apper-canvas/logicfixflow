@@ -5,13 +5,15 @@ import Input from '@/components/atoms/Input';
 import Card from '@/components/atoms/Card';
 import ApperIcon from '@/components/ApperIcon';
 import { getServicesByCategory } from '@/services/api/serviceService';
-import { create as createJob } from '@/services/api/jobService';
+import { create as createJob, printEstimate, emailEstimate } from '@/services/api/jobService';
 
 const QuickEstimateModal = ({ isOpen, onClose }) => {
   const [servicesByCategory, setServicesByCategory] = useState({});
   const [selectedServices, setSelectedServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [converting, setConverting] = useState(false);
+const [printing, setPrinting] = useState(false);
+  const [emailing, setEmailing] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -105,8 +107,62 @@ const QuickEstimateModal = ({ isOpen, onClose }) => {
       onClose();
     } catch (error) {
       toast.error('Failed to create job from estimate');
-    } finally {
+} finally {
       setConverting(false);
+    }
+  };
+
+  const handlePrintEstimate = async () => {
+    if (selectedServices.length === 0) {
+      toast.error('Please select at least one service');
+      return;
+    }
+
+    try {
+      setPrinting(true);
+      const estimate = calculateEstimate();
+      const totalDuration = selectedServices.reduce((total, s) => 
+        total + (s.estimatedDuration * s.quantity), 0
+      );
+
+      await printEstimate({
+        selectedServices,
+        estimate,
+        totalDuration
+      });
+      
+      toast.success('Estimate sent to printer');
+    } catch (error) {
+      toast.error('Failed to print estimate');
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handleEmailEstimate = async () => {
+    if (selectedServices.length === 0) {
+      toast.error('Please select at least one service');
+      return;
+    }
+
+    try {
+      setEmailing(true);
+      const estimate = calculateEstimate();
+      const totalDuration = selectedServices.reduce((total, s) => 
+        total + (s.estimatedDuration * s.quantity), 0
+      );
+
+      await emailEstimate({
+        selectedServices,
+        estimate,
+        totalDuration
+      });
+      
+      toast.success('Email client opened with estimate');
+    } catch (error) {
+      toast.error('Failed to open email client');
+    } finally {
+      setEmailing(false);
     }
   };
 
@@ -274,6 +330,46 @@ const QuickEstimateModal = ({ isOpen, onClose }) => {
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
+<div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={handlePrintEstimate}
+                disabled={selectedServices.length === 0 || printing}
+                variant="outline"
+                className="flex-1 sm:flex-initial"
+              >
+                {printing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    Printing...
+                  </>
+                ) : (
+                  <>
+                    <ApperIcon name="Printer" size={16} className="mr-2" />
+                    Print
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={handleEmailEstimate}
+                disabled={selectedServices.length === 0 || emailing}
+                variant="outline"
+                className="flex-1 sm:flex-initial"
+              >
+                {emailing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    Opening...
+                  </>
+                ) : (
+                  <>
+                    <ApperIcon name="Mail" size={16} className="mr-2" />
+                    Email
+                  </>
+                )}
+              </Button>
+            </div>
+            
             <Button
               onClick={handleConvertToJob}
               disabled={selectedServices.length === 0 || converting}
