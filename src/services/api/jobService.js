@@ -75,11 +75,13 @@ class JobService {
       }));
 
       return transformedData;
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching jobs - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error fetching jobs:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error fetching jobs:", error.message);
       }
       return [];
     }
@@ -133,10 +135,12 @@ class JobService {
         photos: job.photos_c ? JSON.parse(job.photos_c) : []
       };
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error(`Network error fetching job with ID ${id} - check internet connection and API availability`);
+      } else if (error?.response?.data?.message) {
         console.error(`Error fetching job with ID ${id}:`, error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error(`Error fetching job with ID ${id}:`, error.message);
       }
       return null;
     }
@@ -188,11 +192,13 @@ class JobService {
         
         return successfulRecords.length > 0 ? successfulRecords[0].data : null;
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error creating job - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error creating job:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error creating job:", error.message);
       }
       return null;
     }
@@ -250,11 +256,13 @@ class JobService {
         
         return successfulUpdates.length > 0 ? successfulUpdates[0].data : null;
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error updating job - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error updating job:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error updating job:", error.message);
       }
       return null;
     }
@@ -288,11 +296,13 @@ class JobService {
         
         return successfulDeletions.length > 0;
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error deleting job - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error deleting job:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error deleting job:", error.message);
       }
       return false;
     }

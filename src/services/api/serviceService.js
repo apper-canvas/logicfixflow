@@ -56,11 +56,13 @@ class ServiceService {
       }));
 
       return transformedData;
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching services - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error fetching services:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error fetching services:", error.message);
       }
       return [];
     }
@@ -90,8 +92,12 @@ class ServiceService {
         );
       });
       return servicesByCategory;
-    } catch (error) {
-      console.error("Error getting services by category:", error.message);
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error getting services by category - check internet connection and API availability");
+      } else {
+        console.error("Error getting services by category:", error.message);
+      }
       return {};
     }
   }
@@ -132,12 +138,16 @@ class ServiceService {
         isActive: service.is_active_c !== false
       };
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error(`Network error fetching service with ID ${id} - check internet connection and API availability`);
+        throw new Error('Network error - check your connection');
+      } else if (error?.response?.data?.message) {
         console.error(`Error fetching service with ID ${id}:`, error?.response?.data?.message);
+        throw new Error('Service ID must be a number');
       } else {
-        console.error(error.message);
+        console.error(`Error fetching service with ID ${id}:`, error.message);
+        throw new Error('Service ID must be a number');
       }
-      throw new Error('Service ID must be a number');
     }
   }
 
@@ -202,11 +212,13 @@ class ServiceService {
         
         return successfulRecords[0].data;
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error creating service - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error creating service:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error creating service:", error.message);
       }
       throw error;
     }
@@ -273,13 +285,17 @@ class ServiceService {
         
         return successfulUpdates[0].data;
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error updating service - check internet connection and API availability");
+        throw new Error('Network error - check your connection');
+      } else if (error?.response?.data?.message) {
         console.error("Error updating service:", error?.response?.data?.message);
+        throw new Error('Service ID must be a number');
       } else {
-        console.error(error.message);
+        console.error("Error updating service:", error.message);
+        throw new Error('Service ID must be a number');
       }
-      throw new Error('Service ID must be a number');
     }
   }
 
@@ -315,13 +331,17 @@ class ServiceService {
         
         return true;
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error deleting service - check internet connection and API availability");
+        throw new Error('Network error - check your connection');
+      } else if (error?.response?.data?.message) {
         console.error("Error deleting service:", error?.response?.data?.message);
+        throw new Error('Service ID must be a number');
       } else {
-        console.error(error.message);
+        console.error("Error deleting service:", error.message);
+        throw new Error('Service ID must be a number');
       }
-      throw new Error('Service ID must be a number');
     }
   }
 

@@ -54,10 +54,12 @@ class ReviewService {
 
       return transformedData;
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching reviews - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error fetching reviews:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error fetching reviews:", error.message);
       }
       return [];
     }
@@ -101,11 +103,13 @@ class ReviewService {
         createdAt: review.created_at_c || new Date().toISOString(),
         updatedAt: review.updated_at_c || new Date().toISOString()
       };
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error(`Network error fetching review with ID ${id} - check internet connection and API availability`);
+      } else if (error?.response?.data?.message) {
         console.error(`Error fetching review with ID ${id}:`, error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error(`Error fetching review with ID ${id}:`, error.message);
       }
       throw error;
     }
@@ -158,8 +162,12 @@ class ReviewService {
         createdAt: review.created_at_c || new Date().toISOString(),
         updatedAt: review.updated_at_c || new Date().toISOString()
       }));
-    } catch (error) {
-      console.error("Error fetching reviews by client ID:", error.message);
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching reviews by client ID - check internet connection and API availability");
+      } else {
+        console.error("Error fetching reviews by client ID:", error.message);
+      }
       return [];
     }
   }
@@ -207,8 +215,12 @@ class ReviewService {
         createdAt: review.created_at_c || new Date().toISOString(),
         updatedAt: review.updated_at_c || new Date().toISOString()
       }));
-    } catch (error) {
-      console.error("Error fetching reviews by job ID:", error.message);
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching reviews by job ID - check internet connection and API availability");
+      } else {
+        console.error("Error fetching reviews by job ID:", error.message);
+      }
       return [];
     }
   }
@@ -291,11 +303,13 @@ class ReviewService {
           return successfulRecords[0].data;
         }
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error creating review - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error creating review:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error creating review:", error.message);
       }
       throw error;
     }
@@ -365,11 +379,13 @@ class ReviewService {
           return successfulUpdates[0].data;
         }
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error updating review - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error updating review:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error updating review:", error.message);
       }
       throw error;
     }
@@ -416,10 +432,12 @@ class ReviewService {
         }
       }
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error deleting review - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error deleting review:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error deleting review:", error.message);
       }
       throw error;
     }

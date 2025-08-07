@@ -61,10 +61,12 @@ class ClientService {
 
       return transformedData;
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching clients - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error fetching clients:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error fetching clients:", error.message);
       }
       return [];
     }
@@ -112,13 +114,17 @@ class ClientService {
         preferredContact: 'email',
         notes: ''
       };
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error(`Network error fetching client with ID ${id} - check internet connection and API availability`);
+        toast.error('Network error - check your connection');
+      } else if (error?.response?.data?.message) {
         console.error(`Error fetching client with ID ${id}:`, error?.response?.data?.message);
+        toast.error('Invalid client ID format');
       } else {
-        console.error(error.message);
+        console.error(`Error fetching client with ID ${id}:`, error.message);
+        toast.error('Invalid client ID format');
       }
-      toast.error('Invalid client ID format');
       return null;
     }
   }
@@ -172,10 +178,12 @@ class ClientService {
         }
       }
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error creating client - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error creating client:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error creating client:", error.message);
       }
       return null;
     }
@@ -231,16 +239,19 @@ class ClientService {
         }
       }
     } catch (error) {
-      if (error?.response?.data?.message) {
+if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error updating client - check internet connection and API availability");
+        toast.error('Network error - check your connection');
+      } else if (error?.response?.data?.message) {
         console.error("Error updating client:", error?.response?.data?.message);
+        toast.error('Invalid client ID format');
       } else {
-        console.error(error.message);
+        console.error("Error updating client:", error.message);
+        toast.error('Invalid client ID format');
       }
-      toast.error('Invalid client ID format');
       return null;
     }
   }
-
   async deleteClient(id) {
     try {
       const params = {
@@ -272,13 +283,17 @@ class ClientService {
           return true;
         }
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error deleting client - check internet connection and API availability");
+        toast.error('Network error - check your connection');
+      } else if (error?.response?.data?.message) {
         console.error("Error deleting client:", error?.response?.data?.message);
+        toast.error('Invalid client ID format');
       } else {
-        console.error(error.message);
+        console.error("Error deleting client:", error.message);
+        toast.error('Invalid client ID format');
       }
-      toast.error('Invalid client ID format');
       return false;
     }
   }

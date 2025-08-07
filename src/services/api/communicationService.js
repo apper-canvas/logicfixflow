@@ -52,11 +52,13 @@ class CommunicationService {
       }));
 
       return transformedData;
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching communications - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error fetching communications:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error fetching communications:", error.message);
       }
       return [];
     }
@@ -107,8 +109,12 @@ class CommunicationService {
         direction: 'outbound',
         contactPerson: ''
       }));
-    } catch (error) {
-      console.error("Error fetching communications by client ID:", error.message);
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error fetching communications by client ID - check internet connection and API availability");
+      } else {
+        console.error("Error fetching communications by client ID:", error.message);
+      }
       return [];
     }
   }
@@ -168,11 +174,13 @@ class CommunicationService {
           };
         }
       }
-    } catch (error) {
-      if (error?.response?.data?.message) {
+} catch (error) {
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        console.error("Network error creating communication - check internet connection and API availability");
+      } else if (error?.response?.data?.message) {
         console.error("Error creating communication:", error?.response?.data?.message);
       } else {
-        console.error(error.message);
+        console.error("Error creating communication:", error.message);
       }
       return null;
     }
