@@ -407,7 +407,10 @@ delete: async (id) => {
       }
       return [];
     }
-  }
+}
 };
+
+// Named exports for individual functions
+export const searchServices = serviceService.searchServices;
 
 export default serviceService;
