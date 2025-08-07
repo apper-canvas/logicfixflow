@@ -1,7 +1,5 @@
 import { toast } from 'react-toastify';
 
-import { toast } from 'react-toastify';
-
 class ReviewService {
   constructor() {
     // Initialize ApperClient with Project ID and Public Key
