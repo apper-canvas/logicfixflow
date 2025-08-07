@@ -253,9 +253,8 @@ export const reviewService = {
         toast.error("Failed to delete review");
       }
       return false;
-    }
-  }
-},
+}
+  },
 
   getByClientId: async (clientId) => {
     try {

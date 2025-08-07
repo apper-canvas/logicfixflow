@@ -264,4 +264,3 @@ export const clientService = {
 };
 
 export default clientService;
-export default clientService;
