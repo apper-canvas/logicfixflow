@@ -176,3 +176,15 @@ export const calendarService = {
 };
 
 export const jobService = new JobService();
+
+// Named exports for convenient importing
+export const create = (jobData) => jobService.create(jobData);
+export const getAll = (filters) => jobService.getAll(filters);
+export const getById = (id) => jobService.getById(id);
+export const update = (id, updateData) => jobService.update(id, updateData);
+export const deleteJob = (id) => jobService.delete(id);
+export const addNote = (jobId, noteText) => jobService.addNote(jobId, noteText);
+export const updateNote = (jobId, noteId, noteText) => jobService.updateNote(jobId, noteId, noteText);
+export const deleteNote = (jobId, noteId) => jobService.deleteNote(jobId, noteId);
+export const addPhoto = (jobId, photoData) => jobService.addPhoto(jobId, photoData);
+export const deletePhoto = (jobId, photoId) => jobService.deletePhoto(jobId, photoId);
