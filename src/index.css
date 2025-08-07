@@ -87,13 +87,11 @@ h1, h2, h3, h4, h5, h6 {
   .calendar-grid {
     @apply text-xs;
   }
-  
-  .calendar-day-cell {
-    @apply min-h-20 p-1;
+.calendar-day-cell {
+    @apply min-h-[5rem] p-1;
   }
-  
-  .calendar-time-slot {
-    @apply min-h-12 p-1;
+.calendar-time-slot {
+    @apply min-h-[3rem] p-1;
   }
   
   .calendar-job-card {
@@ -103,9 +101,8 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 640px) {
   .calendar-day-cell {
-    @apply min-h-16;
+    @apply min-h-[4rem];
   }
-  
   .calendar-job-card {
     @apply mb-0.5;
   }
