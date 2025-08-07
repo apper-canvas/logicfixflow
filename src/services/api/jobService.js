@@ -69,9 +69,9 @@ class JobService {
         serviceId: job.service_id_c?.Id,
         estimatedCost: job.estimated_cost_c || 0,
         estimatedDuration: job.estimated_duration_c || 0,
-        services: job.services_c || '',
-        notes: job.notes_c ? JSON.parse(job.notes_c) : [],
-        photos: job.photos_c ? JSON.parse(job.photos_c) : []
+services: job.services_c || '',
+        notes: job.notes_c ? (typeof job.notes_c === 'string' ? JSON.parse(job.notes_c) : job.notes_c) : [],
+        photos: job.photos_c ? (typeof job.photos_c === 'string' ? JSON.parse(job.photos_c) : job.photos_c) : []
       }));
 
       return transformedData;
@@ -130,9 +130,9 @@ class JobService {
         serviceId: job.service_id_c?.Id,
         estimatedCost: job.estimated_cost_c || 0,
         estimatedDuration: job.estimated_duration_c || 0,
-        services: job.services_c || '',
-        notes: job.notes_c ? JSON.parse(job.notes_c) : [],
-        photos: job.photos_c ? JSON.parse(job.photos_c) : []
+services: job.services_c || '',
+        notes: job.notes_c ? (typeof job.notes_c === 'string' ? JSON.parse(job.notes_c) : job.notes_c) : [],
+        photos: job.photos_c ? (typeof job.photos_c === 'string' ? JSON.parse(job.photos_c) : job.photos_c) : []
       };
     } catch (error) {
 if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
