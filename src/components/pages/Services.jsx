@@ -6,6 +6,7 @@ import Input from '@/components/atoms/Input';
 import ApperIcon from '@/components/ApperIcon';
 import ServiceCard from '@/components/molecules/ServiceCard';
 import ServiceFormModal from '@/components/organisms/ServiceFormModal';
+import QuickEstimateModal from '@/components/organisms/QuickEstimateModal';
 import Loading from '@/components/ui/Loading';
 import Error from '@/components/ui/Error';
 import { 
@@ -23,11 +24,12 @@ const Services = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredServices, setFilteredServices] = useState([]);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingService, setEditingService] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+const [editingService, setEditingService] = useState(null);
+const [selectedCategory, setSelectedCategory] = useState('all');
+const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadServices();
+useEffect(() => {
+loadServices();
   }, []);
 
   useEffect(() => {
@@ -140,11 +142,19 @@ const Services = () => {
               Manage your service offerings and pricing packages ({getTotalServices()} services)
             </p>
           </div>
-          <Button onClick={handleAddService} className="shrink-0">
-            <ApperIcon name="Plus" size={16} className="mr-2" />
-            Add Service
-          </Button>
-        </div>
+<Button 
+  onClick={() => setIsEstimateModalOpen(true)}
+  variant="outline"
+  className="shrink-0 mr-3"
+>
+  <ApperIcon name="Calculator" size={16} className="mr-2" />
+  Quick Estimate
+</Button>
+<Button onClick={handleAddService} className="shrink-0">
+  <ApperIcon name="Plus" size={16} className="mr-2" />
+  Add Service
+</Button>
+</div>
       </div>
 
       <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -249,15 +259,19 @@ const Services = () => {
           </Card>
         )}
       </div>
+<ServiceFormModal
+  isOpen={isFormModalOpen}
+  onClose={() => setIsFormModalOpen(false)}
+  onSubmit={handleSubmitService}
+  service={editingService}
+/>
 
-      <ServiceFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSubmit={handleSubmitService}
-        service={editingService}
-      />
-    </div>
-  );
+<QuickEstimateModal
+  isOpen={isEstimateModalOpen}
+  onClose={() => setIsEstimateModalOpen(false)}
+/>
+</div>
+);
 };
 
 export default Services;

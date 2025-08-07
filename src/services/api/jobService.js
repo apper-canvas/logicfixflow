@@ -37,17 +37,22 @@ async getAll(filters = {}) {
     return { ...job };
   }
 
-  async create(jobData) {
-    await delay(400);
-    const newJob = {
-      ...jobData,
-      Id: Math.max(...this.jobs.map(j => j.Id)) + 1,
-      createdAt: new Date().toISOString(),
-      status: jobData.status || "Scheduled"
-    };
-    this.jobs.push(newJob);
-    return { ...newJob };
-  }
+async create(jobData) {
+  await delay(400);
+  const newJob = {
+    ...jobData,
+    Id: Math.max(...this.jobs.map(j => j.Id)) + 1,
+    createdAt: new Date().toISOString(),
+    status: jobData.status || "Scheduled",
+    estimatedCost: jobData.estimatedCost || null,
+    estimatedDuration: jobData.estimatedDuration || null,
+    services: jobData.services || [],
+    notes: [],
+    photos: []
+  };
+  this.jobs.push(newJob);
+  return { ...newJob };
+}
 
 async update(id, updateData) {
     await delay(300);
