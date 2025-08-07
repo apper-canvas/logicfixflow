@@ -1,142 +1,118 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
+import React from "react";
+import { create, getAll, getById, update } from "@/services/api/jobService";
+import { addCommunication, getCommunicationsByClientId } from "@/services/api/clientService";
+import Error from "@/components/ui/Error";
 
-class CommunicationService {
-  constructor() {
-    // Initialize ApperClient with Project ID and Public Key
-    const { ApperClient } = window.ApperSDK;
-    this.apperClient = new ApperClient({
-      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-    });
-    this.tableName = 'communication_c';
-  }
+const tableName = 'communication_c';
 
-  async getCommunications() {
+// Initialize ApperClient
+const getApperClient = () => {
+  const { ApperClient } = window.ApperSDK;
+  return new ApperClient({
+    apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+    apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+  });
+};
+
+// Field definitions for communication_c table
+const communicationFields = [
+  { field: { Name: "Name" } },
+  { field: { Name: "Tags" } },
+  { field: { Name: "type_c" } },
+  { field: { Name: "subject_c" } },
+  { field: { Name: "details_c" } },
+  { field: { Name: "date_c" } },
+  { field: { Name: "client_id_c" } }
+];
+
+// Helper function to format data for API submission (only Updateable fields)
+const formatCommunicationForSubmission = (commData) => {
+  return {
+    Name: commData.Name || commData.subject_c || commData.subject,
+    Tags: commData.Tags,
+    type_c: commData.type_c || commData.type,
+    subject_c: commData.subject_c || commData.subject,
+    details_c: commData.details_c || commData.details,
+    date_c: commData.date_c || commData.date || new Date().toISOString(),
+    client_id_c: parseInt(commData.client_id_c || commData.clientId)
+  };
+};
+
+export const communicationService = {
+  getAll: async () => {
     try {
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "client_id_c" } },
-          { field: { Name: "type_c" } },
-          { field: { Name: "subject_c" } },
-          { field: { Name: "details_c" } },
-          { field: { Name: "date_c" } }
+        fields: communicationFields,
+        orderBy: [
+          {
+            fieldName: "date_c",
+            sorttype: "DESC"
+          }
         ],
         pagingInfo: {
-          limit: 100,
+          limit: 50,
           offset: 0
         }
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
-      
+      const response = await apperClient.fetchRecords(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
         return [];
       }
 
-      // Transform data to match expected format
-      const transformedData = (response.data || []).map(comm => ({
-        Id: comm.Id,
-        clientId: comm.client_id_c?.Id || comm.client_id_c,
-        type: comm.type_c || 'email',
-        subject: comm.subject_c || '',
-        message: comm.details_c || '',
-        details: comm.details_c || '',
-        date: comm.date_c || new Date().toISOString(),
-        direction: 'outbound',
-        contactPerson: ''
-      }));
-
-      return transformedData;
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error fetching communications - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
+      return response.data || [];
+    } catch (error) {
+      if (error?.response?.data?.message) {
         console.error("Error fetching communications:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error fetching communications:", error.message);
+        console.error(error.message);
+        toast.error("Failed to fetch communications");
       }
       return [];
     }
-  }
+  },
 
-  async getCommunicationsByClientId(clientId) {
+  getById: async (id) => {
     try {
-      const numericId = parseInt(clientId);
-      if (isNaN(numericId)) return [];
-
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "client_id_c" } },
-          { field: { Name: "type_c" } },
-          { field: { Name: "subject_c" } },
-          { field: { Name: "details_c" } },
-          { field: { Name: "date_c" } }
-        ],
-        where: [{
-          FieldName: "client_id_c",
-          Operator: "EqualTo",
-          Values: [numericId]
-        }],
-        orderBy: [{
-          fieldName: "date_c",
-          sorttype: "DESC"
-        }]
+        fields: communicationFields
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
-      
-      if (!response.success) {
-        console.error(response.message);
-        return [];
+      const response = await apperClient.getRecordById(tableName, parseInt(id), params);
+
+      if (!response || !response.data) {
+        throw new Error('Communication not found');
       }
 
-      return (response.data || []).map(comm => ({
-        Id: comm.Id,
-        clientId: comm.client_id_c?.Id || comm.client_id_c,
-        type: comm.type_c || 'email',
-        subject: comm.subject_c || '',
-        message: comm.details_c || '',
-        details: comm.details_c || '',
-        date: comm.date_c || new Date().toISOString(),
-        direction: 'outbound',
-        contactPerson: ''
-      }));
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error fetching communications by client ID - check internet connection and API availability");
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error(`Error fetching communication with ID ${id}:`, error?.response?.data?.message);
       } else {
-        console.error("Error fetching communications by client ID:", error.message);
+        console.error(error.message);
       }
-      return [];
+      throw error;
     }
-  }
+  },
 
-  async addCommunication(communication) {
+  create: async (commData) => {
     try {
+      const apperClient = getApperClient();
+      const formattedData = formatCommunicationForSubmission(commData);
+
       const params = {
-        records: [
-          {
-            Name: communication.subject || 'Communication',
-            Tags: '',
-            client_id_c: parseInt(communication.clientId),
-            type_c: communication.type || 'email',
-            subject_c: communication.subject || '',
-            details_c: communication.message || communication.details || '',
-            date_c: new Date().toISOString()
-          }
-        ]
+        records: [formattedData]
       };
 
-      const response = await this.apperClient.createRecord(this.tableName, params);
-      
+      const response = await apperClient.createRecord(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
@@ -146,9 +122,9 @@ class CommunicationService {
       if (response.results) {
         const successfulRecords = response.results.filter(result => result.success);
         const failedRecords = response.results.filter(result => !result.success);
-        
+
         if (failedRecords.length > 0) {
-          console.error(`Failed to create communications ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          console.error(`Failed to create ${failedRecords.length} communication records:${JSON.stringify(failedRecords)}`);
           
           failedRecords.forEach(record => {
             record.errors?.forEach(error => {
@@ -157,38 +133,124 @@ class CommunicationService {
             if (record.message) toast.error(record.message);
           });
         }
-        
+
         if (successfulRecords.length > 0) {
-          toast.success('Communication logged successfully');
-          const newComm = successfulRecords[0].data;
-          
-          return {
-            Id: newComm.Id,
-            clientId: parseInt(communication.clientId),
-            type: communication.type || 'email',
-            subject: communication.subject || '',
-            message: communication.message || communication.details || '',
-            date: new Date().toISOString(),
-            direction: communication.direction || 'outbound',
-            contactPerson: communication.contactPerson || ''
-          };
+          toast.success('Communication created successfully');
+          return successfulRecords[0].data;
         }
       }
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error creating communication - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
         console.error("Error creating communication:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error creating communication:", error.message);
+        console.error(error.message);
+        toast.error("Failed to create communication");
       }
       return null;
     }
+  },
+
+  update: async (id, commData) => {
+    try {
+      const apperClient = getApperClient();
+      const formattedData = {
+        Id: parseInt(id),
+        ...formatCommunicationForSubmission(commData)
+      };
+
+      const params = {
+        records: [formattedData]
+      };
+
+      const response = await apperClient.updateRecord(tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update ${failedUpdates.length} communication records:${JSON.stringify(failedUpdates)}`);
+          
+          failedUpdates.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulUpdates.length > 0) {
+          toast.success('Communication updated successfully');
+          return successfulUpdates[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error updating communication:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to update communication");
+      }
+      return null;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      const apperClient = getApperClient();
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await apperClient.deleteRecord(tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successfulDeletions = response.results.filter(result => result.success);
+        const failedDeletions = response.results.filter(result => !result.success);
+
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete ${failedDeletions.length} communication records:${JSON.stringify(failedDeletions)}`);
+          
+          failedDeletions.forEach(record => {
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulDeletions.length > 0) {
+          toast.success('Communication deleted successfully');
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error deleting communication:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to delete communication");
+      }
+      return false;
+    }
   }
-}
-
-const communicationService = new CommunicationService();
-
-// Export service methods for use in components
-export const getCommunicationsByClientId = (clientId) => communicationService.getCommunicationsByClientId(clientId);
-export const addCommunication = (communication) => communicationService.addCommunication(communication);
+};
+export default communicationService;

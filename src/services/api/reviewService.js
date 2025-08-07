@@ -1,139 +1,271 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
+import React from "react";
+import { create, getAll, getById, update } from "@/services/api/jobService";
+import Error from "@/components/ui/Error";
 
-class ReviewService {
-  constructor() {
-    // Initialize ApperClient with Project ID and Public Key
-    const { ApperClient } = window.ApperSDK;
-    this.apperClient = new ApperClient({
-      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-    });
-    this.tableName = 'review_c';
-  }
+const tableName = 'review_c';
 
-  async getReviews() {
+// Initialize ApperClient
+const getApperClient = () => {
+  const { ApperClient } = window.ApperSDK;
+  return new ApperClient({
+    apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+    apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+  });
+};
+
+// Field definitions for review_c table
+const reviewFields = [
+  { field: { Name: "Name" } },
+  { field: { Name: "Tags" } },
+  { field: { Name: "client_id_c" } },
+  { field: { Name: "job_id_c" } },
+  { field: { Name: "job_description_c" } },
+  { field: { Name: "rating_c" } },
+  { field: { Name: "comment_c" } },
+  { field: { Name: "created_at_c" } },
+  { field: { Name: "updated_at_c" } }
+];
+
+// Helper function to format data for API submission (only Updateable fields)
+const formatReviewForSubmission = (reviewData) => {
+  return {
+    Name: reviewData.Name || `Review for ${reviewData.job_description_c || reviewData.jobDescription || 'Job'}`,
+    Tags: reviewData.Tags,
+    client_id_c: parseInt(reviewData.client_id_c || reviewData.clientId),
+    job_id_c: parseInt(reviewData.job_id_c || reviewData.jobId),
+    job_description_c: reviewData.job_description_c || reviewData.jobDescription,
+    rating_c: `${reviewData.rating_c || reviewData.rating || 5}`,
+    comment_c: reviewData.comment_c || reviewData.comment,
+    created_at_c: reviewData.created_at_c || new Date().toISOString(),
+    updated_at_c: new Date().toISOString()
+  };
+};
+
+export const reviewService = {
+  getAll: async () => {
     try {
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "client_id_c" } },
-          { field: { Name: "job_id_c" } },
-          { field: { Name: "job_description_c" } },
-          { field: { Name: "rating_c" } },
-          { field: { Name: "comment_c" } },
-          { field: { Name: "created_at_c" } },
-          { field: { Name: "updated_at_c" } }
+        fields: reviewFields,
+        orderBy: [
+          {
+            fieldName: "created_at_c",
+            sorttype: "DESC"
+          }
         ],
         pagingInfo: {
-          limit: 100,
+          limit: 50,
           offset: 0
         }
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
-      
+      const response = await apperClient.fetchRecords(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
         return [];
       }
 
-      // Transform data to match expected format
-      const transformedData = (response.data || []).map(review => ({
-        Id: review.Id,
-        clientId: review.client_id_c?.Id || review.client_id_c,
-        jobId: review.job_id_c?.Id || review.job_id_c,
-        jobDescription: review.job_description_c || '',
-        rating: review.rating_c || 0,
-        comment: review.comment_c || '',
-        createdAt: review.created_at_c || new Date().toISOString(),
-        updatedAt: review.updated_at_c || new Date().toISOString()
-      }));
-
-      return transformedData;
+      return response.data || [];
     } catch (error) {
-if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error fetching reviews - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
+      if (error?.response?.data?.message) {
         console.error("Error fetching reviews:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error fetching reviews:", error.message);
+        console.error(error.message);
+        toast.error("Failed to fetch reviews");
       }
       return [];
     }
-  }
+  },
 
-  async getReviewById(id) {
+  getById: async (id) => {
     try {
-      if (typeof id !== 'number' || id <= 0) {
-        throw new Error('Invalid review ID');
-      }
-
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "client_id_c" } },
-          { field: { Name: "job_id_c" } },
-          { field: { Name: "job_description_c" } },
-          { field: { Name: "rating_c" } },
-          { field: { Name: "comment_c" } },
-          { field: { Name: "created_at_c" } },
-          { field: { Name: "updated_at_c" } }
-        ]
+        fields: reviewFields
       };
 
-      const response = await this.apperClient.getRecordById(this.tableName, parseInt(id), params);
-      
+      const response = await apperClient.getRecordById(tableName, parseInt(id), params);
+
       if (!response || !response.data) {
         throw new Error('Review not found');
       }
 
-      const review = response.data;
-      return {
-        Id: review.Id,
-        clientId: review.client_id_c?.Id || review.client_id_c,
-        jobId: review.job_id_c?.Id || review.job_id_c,
-        jobDescription: review.job_description_c || '',
-        rating: review.rating_c || 0,
-        comment: review.comment_c || '',
-        createdAt: review.created_at_c || new Date().toISOString(),
-        updatedAt: review.updated_at_c || new Date().toISOString()
-      };
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error(`Network error fetching review with ID ${id} - check internet connection and API availability`);
-      } else if (error?.response?.data?.message) {
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
         console.error(`Error fetching review with ID ${id}:`, error?.response?.data?.message);
       } else {
-        console.error(`Error fetching review with ID ${id}:`, error.message);
+        console.error(error.message);
       }
       throw error;
     }
-  }
+  },
 
-  async getReviewsByClientId(clientId) {
+  create: async (reviewData) => {
     try {
-      if (typeof clientId !== 'number' || clientId <= 0) {
+      const apperClient = getApperClient();
+      const formattedData = formatReviewForSubmission(reviewData);
+
+      const params = {
+        records: [formattedData]
+      };
+
+      const response = await apperClient.createRecord(tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulRecords = response.results.filter(result => result.success);
+        const failedRecords = response.results.filter(result => !result.success);
+
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create ${failedRecords.length} review records:${JSON.stringify(failedRecords)}`);
+          
+          failedRecords.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulRecords.length > 0) {
+          toast.success('Review created successfully');
+          return successfulRecords[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error creating review:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to create review");
+      }
+      return null;
+    }
+  },
+
+  update: async (id, reviewData) => {
+    try {
+      const apperClient = getApperClient();
+      const formattedData = {
+        Id: parseInt(id),
+        ...formatReviewForSubmission(reviewData)
+      };
+
+      const params = {
+        records: [formattedData]
+      };
+
+      const response = await apperClient.updateRecord(tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update ${failedUpdates.length} review records:${JSON.stringify(failedUpdates)}`);
+          
+          failedUpdates.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulUpdates.length > 0) {
+          toast.success('Review updated successfully');
+          return successfulUpdates[0].data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error updating review:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to update review");
+      }
+      return null;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      const apperClient = getApperClient();
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await apperClient.deleteRecord(tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successfulDeletions = response.results.filter(result => result.success);
+        const failedDeletions = response.results.filter(result => !result.success);
+
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete ${failedDeletions.length} review records:${JSON.stringify(failedDeletions)}`);
+          
+          failedDeletions.forEach(record => {
+            if (record.message) toast.error(record.message);
+          });
+        }
+
+        if (successfulDeletions.length > 0) {
+          toast.success('Review deleted successfully');
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error deleting review:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to delete review");
+      }
+      return false;
+    }
+  }
+},
+
+  getByClientId: async (clientId) => {
+    try {
+      if (!clientId || (typeof clientId !== 'number' && typeof clientId !== 'string')) {
         return [];
       }
-      
+
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "client_id_c" } },
-          { field: { Name: "job_id_c" } },
-          { field: { Name: "job_description_c" } },
-          { field: { Name: "rating_c" } },
-          { field: { Name: "comment_c" } },
-          { field: { Name: "created_at_c" } },
-          { field: { Name: "updated_at_c" } }
-        ],
+        fields: reviewFields,
         where: [{
           FieldName: "client_id_c",
           Operator: "EqualTo",
@@ -145,334 +277,92 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         }]
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
-      
+      const response = await apperClient.fetchRecords(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
+        toast.error(response.message);
         return [];
       }
 
-      return (response.data || []).map(review => ({
-        Id: review.Id,
-        clientId: review.client_id_c?.Id || review.client_id_c,
-        jobId: review.job_id_c?.Id || review.job_id_c,
-        jobDescription: review.job_description_c || '',
-        rating: review.rating_c || 0,
-        comment: review.comment_c || '',
-        createdAt: review.created_at_c || new Date().toISOString(),
-        updatedAt: review.updated_at_c || new Date().toISOString()
-      }));
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error fetching reviews by client ID - check internet connection and API availability");
+      return response.data || [];
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching reviews by client ID:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
         console.error("Error fetching reviews by client ID:", error.message);
+        toast.error("Failed to fetch client reviews");
       }
       return [];
     }
-  }
+  },
 
-  async getReviewsByJobId(jobId) {
+  getByJobId: async (jobId) => {
     try {
-      if (typeof jobId !== 'number' || jobId <= 0) {
+      if (!jobId || (typeof jobId !== 'number' && typeof jobId !== 'string')) {
         return [];
       }
-      
+
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "client_id_c" } },
-          { field: { Name: "job_id_c" } },
-          { field: { Name: "job_description_c" } },
-          { field: { Name: "rating_c" } },
-          { field: { Name: "comment_c" } },
-          { field: { Name: "created_at_c" } },
-          { field: { Name: "updated_at_c" } }
-        ],
+        fields: reviewFields,
         where: [{
           FieldName: "job_id_c",
           Operator: "EqualTo",
           Values: [parseInt(jobId)]
+        }],
+        orderBy: [{
+          fieldName: "created_at_c",
+          sorttype: "DESC"
         }]
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
-      
+      const response = await apperClient.fetchRecords(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
+        toast.error(response.message);
         return [];
       }
 
-      return (response.data || []).map(review => ({
-        Id: review.Id,
-        clientId: review.client_id_c?.Id || review.client_id_c,
-        jobId: review.job_id_c?.Id || review.job_id_c,
-        jobDescription: review.job_description_c || '',
-        rating: review.rating_c || 0,
-        comment: review.comment_c || '',
-        createdAt: review.created_at_c || new Date().toISOString(),
-        updatedAt: review.updated_at_c || new Date().toISOString()
-      }));
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error fetching reviews by job ID - check internet connection and API availability");
+      return response.data || [];
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching reviews by job ID:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
         console.error("Error fetching reviews by job ID:", error.message);
+        toast.error("Failed to fetch job reviews");
       }
       return [];
     }
-  }
+  },
 
-  async createReview(reviewData) {
+  getStats: async () => {
     try {
-      // Validate required fields
-      if (!reviewData.clientId || typeof reviewData.clientId !== 'number') {
-        toast.error('Invalid client ID');
-        throw new Error('Valid client ID is required');
-      }
-      
-      if (!reviewData.jobId || typeof reviewData.jobId !== 'number') {
-        toast.error('Invalid job ID');
-        throw new Error('Valid job ID is required');
-      }
-      
-      if (!reviewData.rating || reviewData.rating < 1 || reviewData.rating > 5) {
-        toast.error('Rating must be between 1 and 5 stars');
-        throw new Error('Rating must be between 1 and 5');
-      }
-      
-      if (!reviewData.comment || reviewData.comment.trim().length === 0) {
-        toast.error('Review comment is required');
-        throw new Error('Review comment is required');
-      }
-
-      // Check if review already exists for this job
-      const existingReviews = await this.getReviewsByJobId(reviewData.jobId);
-      if (existingReviews.length > 0) {
-        toast.error('A review already exists for this job');
-        throw new Error('Review already exists for this job');
-      }
-
-      const params = {
-        records: [
-          {
-            Name: `Review ${reviewData.jobId}`,
-            Tags: '',
-            client_id_c: parseInt(reviewData.clientId),
-            job_id_c: parseInt(reviewData.jobId),
-            job_description_c: reviewData.jobDescription || '',
-            rating_c: parseInt(reviewData.rating),
-            comment_c: reviewData.comment.trim(),
-            created_at_c: new Date().toISOString(),
-            updated_at_c: new Date().toISOString()
-          }
-        ]
-      };
-
-      const response = await this.apperClient.createRecord(this.tableName, params);
-      
-      if (!response.success) {
-        console.error(response.message);
-        toast.error(response.message);
-        throw new Error(response.message);
-      }
-
-      if (response.results) {
-        const successfulRecords = response.results.filter(result => result.success);
-        const failedRecords = response.results.filter(result => !result.success);
-        
-        if (failedRecords.length > 0) {
-          console.error(`Failed to create reviews ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
-          
-          failedRecords.forEach(record => {
-            record.errors?.forEach(error => {
-              toast.error(`${error.fieldLabel}: ${error.message}`);
-            });
-            if (record.message) toast.error(record.message);
-          });
-          
-          if (successfulRecords.length === 0) {
-            throw new Error('Failed to create review');
-          }
-        }
-        
-        if (successfulRecords.length > 0) {
-          toast.success('Review added successfully!');
-          return successfulRecords[0].data;
-        }
-      }
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error creating review - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
-        console.error("Error creating review:", error?.response?.data?.message);
-      } else {
-        console.error("Error creating review:", error.message);
-      }
-      throw error;
-    }
-  }
-
-  async updateReview(id, updateData) {
-    try {
-      if (typeof id !== 'number' || id <= 0) {
-        toast.error('Invalid review ID');
-        throw new Error('Invalid review ID');
-      }
-      
-      // Validate rating if provided
-      if (updateData.rating && (updateData.rating < 1 || updateData.rating > 5)) {
-        toast.error('Rating must be between 1 and 5 stars');
-        throw new Error('Rating must be between 1 and 5');
-      }
-      
-      // Validate comment if provided
-      if (updateData.comment !== undefined && updateData.comment.trim().length === 0) {
-        toast.error('Review comment cannot be empty');
-        throw new Error('Review comment cannot be empty');
-      }
-
-      const updateFields = {
-        Id: parseInt(id),
-        updated_at_c: new Date().toISOString()
-      };
-
-      if (updateData.jobDescription !== undefined) updateFields.job_description_c = updateData.jobDescription;
-      if (updateData.rating !== undefined) updateFields.rating_c = parseInt(updateData.rating);
-      if (updateData.comment !== undefined) updateFields.comment_c = updateData.comment.trim();
-
-      const params = {
-        records: [updateFields]
-      };
-
-      const response = await this.apperClient.updateRecord(this.tableName, params);
-      
-      if (!response.success) {
-        console.error(response.message);
-        toast.error(response.message);
-        throw new Error(response.message);
-      }
-
-      if (response.results) {
-        const successfulUpdates = response.results.filter(result => result.success);
-        const failedUpdates = response.results.filter(result => !result.success);
-        
-        if (failedUpdates.length > 0) {
-          console.error(`Failed to update reviews ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
-          
-          failedUpdates.forEach(record => {
-            record.errors?.forEach(error => {
-              toast.error(`${error.fieldLabel}: ${error.message}`);
-            });
-            if (record.message) toast.error(record.message);
-          });
-          
-          if (successfulUpdates.length === 0) {
-            throw new Error('Failed to update review');
-          }
-        }
-        
-        if (successfulUpdates.length > 0) {
-          toast.success('Review updated successfully!');
-          return successfulUpdates[0].data;
-        }
-      }
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error updating review - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
-        console.error("Error updating review:", error?.response?.data?.message);
-      } else {
-        console.error("Error updating review:", error.message);
-      }
-      throw error;
-    }
-  }
-
-  async deleteReview(id) {
-    try {
-      if (typeof id !== 'number' || id <= 0) {
-        toast.error('Invalid review ID');
-        throw new Error('Invalid review ID');
-      }
-
-      const params = {
-        RecordIds: [parseInt(id)]
-      };
-
-      const response = await this.apperClient.deleteRecord(this.tableName, params);
-      
-      if (!response.success) {
-        console.error(response.message);
-        toast.error(response.message);
-        throw new Error(response.message);
-      }
-
-      if (response.results) {
-        const successfulDeletions = response.results.filter(result => result.success);
-        const failedDeletions = response.results.filter(result => !result.success);
-        
-        if (failedDeletions.length > 0) {
-          console.error(`Failed to delete reviews ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
-          
-          failedDeletions.forEach(record => {
-            if (record.message) toast.error(record.message);
-          });
-          
-          if (successfulDeletions.length === 0) {
-            throw new Error('Failed to delete review');
-          }
-        }
-        
-        if (successfulDeletions.length > 0) {
-          toast.success('Review deleted successfully!');
-          return true;
-        }
-      }
-    } catch (error) {
-if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error deleting review - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
-        console.error("Error deleting review:", error?.response?.data?.message);
-      } else {
-        console.error("Error deleting review:", error.message);
-      }
-      throw error;
-    }
-  }
-
-  // Utility functions
-  async getAverageRatingByClient(clientId) {
-    try {
-      const clientReviews = await this.getReviewsByClientId(clientId);
-      if (clientReviews.length === 0) return 0;
-      
-      const total = clientReviews.reduce((sum, review) => sum + review.rating, 0);
-      return Math.round((total / clientReviews.length) * 10) / 10;
-    } catch (error) {
-      console.error("Error calculating average rating:", error.message);
-      return 0;
-    }
-  }
-
-  async getReviewStats() {
-    try {
-      const reviews = await this.getReviews();
+      const reviews = await reviewService.getAll();
       const totalReviews = reviews.length;
-      const averageRating = totalReviews > 0 
-        ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
-        : 0;
+      
+      if (totalReviews === 0) {
+        return {
+          totalReviews: 0,
+          averageRating: 0,
+          ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        };
+      }
+
+      const ratings = reviews.map(r => parseInt(r.rating_c) || 0);
+      const averageRating = Math.round((ratings.reduce((sum, r) => sum + r, 0) / totalReviews) * 10) / 10;
       
       const ratingDistribution = {
-        5: reviews.filter(r => r.rating === 5).length,
-        4: reviews.filter(r => r.rating === 4).length,
-        3: reviews.filter(r => r.rating === 3).length,
-        2: reviews.filter(r => r.rating === 2).length,
-        1: reviews.filter(r => r.rating === 1).length
+        5: ratings.filter(r => r === 5).length,
+        4: ratings.filter(r => r === 4).length,
+        3: ratings.filter(r => r === 3).length,
+        2: ratings.filter(r => r === 2).length,
+        1: ratings.filter(r => r === 1).length
       };
-      
+
       return {
         totalReviews,
         averageRating,
@@ -486,59 +376,21 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
         ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
       };
     }
-  }
+  },
 
-  async searchReviews(query) {
+  getAverageRatingByClient: async (clientId) => {
     try {
-      const reviews = await this.getReviews();
+      const clientReviews = await reviewService.getByClientId(clientId);
+      if (clientReviews.length === 0) return 0;
       
-      if (!query || query.trim() === '') {
-        return reviews;
-      }
-      
-      const searchTerm = query.toLowerCase();
-      return reviews.filter(review => 
-        review.comment.toLowerCase().includes(searchTerm) ||
-        review.jobDescription.toLowerCase().includes(searchTerm)
-      );
+      const ratings = clientReviews.map(r => parseInt(r.rating_c) || 0);
+      const total = ratings.reduce((sum, rating) => sum + rating, 0);
+      return Math.round((total / clientReviews.length) * 10) / 10;
     } catch (error) {
-      console.error("Error searching reviews:", error.message);
-      return [];
+      console.error("Error calculating average rating:", error.message);
+      return 0;
     }
   }
+};
 
-  async filterReviewsByRating(rating) {
-    try {
-      const reviews = await this.getReviews();
-      
-      if (!rating || rating === 'All') {
-        return reviews;
-      }
-      
-      const targetRating = parseInt(rating);
-      if (targetRating < 1 || targetRating > 5) {
-        return reviews;
-      }
-      
-      return reviews.filter(review => review.rating === targetRating);
-    } catch (error) {
-      console.error("Error filtering reviews by rating:", error.message);
-      return [];
-    }
-  }
-}
-
-const reviewService = new ReviewService();
-
-// Export service methods for use in components
-export const getReviews = () => reviewService.getReviews();
-export const getReviewById = (id) => reviewService.getReviewById(id);
-export const getReviewsByClientId = (clientId) => reviewService.getReviewsByClientId(clientId);
-export const getReviewsByJobId = (jobId) => reviewService.getReviewsByJobId(jobId);
-export const createReview = (reviewData) => reviewService.createReview(reviewData);
-export const updateReview = (id, updateData) => reviewService.updateReview(id, updateData);
-export const deleteReview = (id) => reviewService.deleteReview(id);
-export const getAverageRatingByClient = (clientId) => reviewService.getAverageRatingByClient(clientId);
-export const getReviewStats = () => reviewService.getReviewStats();
-export const searchReviews = (query) => reviewService.searchReviews(query);
-export const filterReviewsByRating = (rating) => reviewService.filterReviewsByRating(rating);
+export default reviewService;

@@ -1,156 +1,127 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
+import React from "react";
+import { addCommunication, getCommunicationsByClientId } from "@/services/api/communicationService";
+import { create, getAll, getById, update } from "@/services/api/jobService";
+import { createReview, deleteReview, getReviewsByClientId, updateReview } from "@/services/api/reviewService";
+import Error from "@/components/ui/Error";
 
-class ClientService {
-  constructor() {
-    // Initialize ApperClient with Project ID and Public Key
-    const { ApperClient } = window.ApperSDK;
-    this.apperClient = new ApperClient({
-      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
-      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
-    });
-    this.tableName = 'client_c';
-  }
+const tableName = 'client_c';
 
-  async getClients() {
+// Initialize ApperClient
+const getApperClient = () => {
+  const { ApperClient } = window.ApperSDK;
+  return new ApperClient({
+    apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+    apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+  });
+};
+
+// Field definitions for client_c table
+const clientFields = [
+  { field: { Name: "Name" } },
+  { field: { Name: "Tags" } },
+  { field: { Name: "email_c" } },
+  { field: { Name: "company_c" } },
+  { field: { Name: "phone_c" } },
+  { field: { Name: "address_c" } },
+  { field: { Name: "status_c" } },
+  { field: { Name: "total_jobs_c" } },
+  { field: { Name: "total_spent_c" } },
+  { field: { Name: "client_since_c" } },
+  { field: { Name: "last_contact_c" } }
+];
+
+// Helper function to format data for API submission (only Updateable fields)
+const formatClientForSubmission = (clientData) => {
+  return {
+    Name: clientData.Name || clientData.name,
+    Tags: clientData.Tags,
+    email_c: clientData.email_c || clientData.email,
+    company_c: clientData.company_c || clientData.company,
+    phone_c: clientData.phone_c || clientData.phone,
+    address_c: clientData.address_c || clientData.address,
+    status_c: clientData.status_c || clientData.status,
+    total_jobs_c: clientData.total_jobs_c || clientData.totalJobs || 0,
+    total_spent_c: clientData.total_spent_c || clientData.totalSpent || 0.0,
+    client_since_c: clientData.client_since_c || clientData.clientSince || new Date().toISOString(),
+    last_contact_c: clientData.last_contact_c || clientData.lastContact
+  };
+};
+
+export const clientService = {
+  getAll: async () => {
     try {
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "email_c" } },
-          { field: { Name: "company_c" } },
-          { field: { Name: "phone_c" } },
-          { field: { Name: "address_c" } },
-          { field: { Name: "status_c" } },
-          { field: { Name: "total_jobs_c" } },
-          { field: { Name: "total_spent_c" } },
-          { field: { Name: "client_since_c" } },
-          { field: { Name: "last_contact_c" } }
+        fields: clientFields,
+        orderBy: [
+          {
+            fieldName: "Name",
+            sorttype: "ASC"
+          }
         ],
         pagingInfo: {
-          limit: 100,
+          limit: 50,
           offset: 0
         }
       };
 
-      const response = await this.apperClient.fetchRecords(this.tableName, params);
-      
+      const response = await apperClient.fetchRecords(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
         return [];
       }
 
-      // Transform data to match expected format
-      const transformedData = (response.data || []).map(client => ({
-        Id: client.Id,
-        name: client.Name || '',
-        email: client.email_c || '',
-        phone: client.phone_c || '',
-        company: client.company_c || '',
-        address: client.address_c || '',
-        status: client.status_c || 'Active',
-        totalJobs: client.total_jobs_c || 0,
-        totalSpent: client.total_spent_c || 0,
-        clientSince: client.client_since_c || new Date().toISOString(),
-        lastContact: client.last_contact_c || new Date().toISOString(),
-        preferredContact: 'email',
-        notes: ''
-      }));
-
-      return transformedData;
+      return response.data || [];
     } catch (error) {
-if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error fetching clients - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
+      if (error?.response?.data?.message) {
         console.error("Error fetching clients:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error fetching clients:", error.message);
+        console.error(error.message);
+        toast.error("Failed to fetch clients");
       }
       return [];
     }
-  }
+  },
 
-  async getClientById(id) {
+  getById: async (id) => {
     try {
+      const apperClient = getApperClient();
       const params = {
-        fields: [
-          { field: { Name: "Id" } },
-          { field: { Name: "Name" } },
-          { field: { Name: "Tags" } },
-          { field: { Name: "email_c" } },
-          { field: { Name: "company_c" } },
-          { field: { Name: "phone_c" } },
-          { field: { Name: "address_c" } },
-          { field: { Name: "status_c" } },
-          { field: { Name: "total_jobs_c" } },
-          { field: { Name: "total_spent_c" } },
-          { field: { Name: "client_since_c" } },
-          { field: { Name: "last_contact_c" } }
-        ]
+        fields: clientFields
       };
 
-      const response = await this.apperClient.getRecordById(this.tableName, parseInt(id), params);
-      
+      const response = await apperClient.getRecordById(tableName, parseInt(id), params);
+
       if (!response || !response.data) {
-        toast.error('Client not found');
-        return null;
+        throw new Error('Client not found');
       }
 
-      const client = response.data;
-      return {
-        Id: client.Id,
-        name: client.Name || '',
-        email: client.email_c || '',
-        phone: client.phone_c || '',
-        company: client.company_c || '',
-        address: client.address_c || '',
-        status: client.status_c || 'Active',
-        totalJobs: client.total_jobs_c || 0,
-        totalSpent: client.total_spent_c || 0,
-        clientSince: client.client_since_c || new Date().toISOString(),
-        lastContact: client.last_contact_c || new Date().toISOString(),
-        preferredContact: 'email',
-        notes: ''
-      };
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error(`Network error fetching client with ID ${id} - check internet connection and API availability`);
-        toast.error('Network error - check your connection');
-      } else if (error?.response?.data?.message) {
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
         console.error(`Error fetching client with ID ${id}:`, error?.response?.data?.message);
-        toast.error('Invalid client ID format');
       } else {
-        console.error(`Error fetching client with ID ${id}:`, error.message);
-        toast.error('Invalid client ID format');
+        console.error(error.message);
       }
-      return null;
+      throw error;
     }
-  }
+  },
 
-  async createClient(clientData) {
+  create: async (clientData) => {
     try {
+      const apperClient = getApperClient();
+      const formattedData = formatClientForSubmission(clientData);
+
       const params = {
-        records: [
-          {
-            Name: clientData.name || '',
-            Tags: clientData.tags || '',
-            email_c: clientData.email || '',
-            company_c: clientData.company || '',
-            phone_c: clientData.phone || '',
-            address_c: clientData.address || '',
-            status_c: clientData.status || 'Active',
-            total_jobs_c: 0,
-            total_spent_c: 0,
-            client_since_c: new Date().toISOString(),
-            last_contact_c: new Date().toISOString()
-          }
-        ]
+        records: [formattedData]
       };
 
-      const response = await this.apperClient.createRecord(this.tableName, params);
-      
+      const response = await apperClient.createRecord(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
@@ -160,9 +131,9 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
       if (response.results) {
         const successfulRecords = response.results.filter(result => result.success);
         const failedRecords = response.results.filter(result => !result.success);
-        
+
         if (failedRecords.length > 0) {
-          console.error(`Failed to create clients ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          console.error(`Failed to create ${failedRecords.length} client records:${JSON.stringify(failedRecords)}`);
           
           failedRecords.forEach(record => {
             record.errors?.forEach(error => {
@@ -171,47 +142,40 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
             if (record.message) toast.error(record.message);
           });
         }
-        
+
         if (successfulRecords.length > 0) {
           toast.success('Client created successfully');
           return successfulRecords[0].data;
         }
       }
+
+      return null;
     } catch (error) {
-if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error creating client - check internet connection and API availability");
-      } else if (error?.response?.data?.message) {
+      if (error?.response?.data?.message) {
         console.error("Error creating client:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error creating client:", error.message);
+        console.error(error.message);
+        toast.error("Failed to create client");
       }
       return null;
     }
-  }
+  },
 
-  async updateClient(id, updates) {
+  update: async (id, clientData) => {
     try {
-      const updateFields = {
-        Id: parseInt(id)
+      const apperClient = getApperClient();
+      const formattedData = {
+        Id: parseInt(id),
+        ...formatClientForSubmission(clientData)
       };
-
-      // Only include updateable fields
-      if (updates.name !== undefined) updateFields.Name = updates.name;
-      if (updates.tags !== undefined) updateFields.Tags = updates.tags;
-      if (updates.email !== undefined) updateFields.email_c = updates.email;
-      if (updates.company !== undefined) updateFields.company_c = updates.company;
-      if (updates.phone !== undefined) updateFields.phone_c = updates.phone;
-      if (updates.address !== undefined) updateFields.address_c = updates.address;
-      if (updates.status !== undefined) updateFields.status_c = updates.status;
-      if (updates.totalJobs !== undefined) updateFields.total_jobs_c = updates.totalJobs;
-      if (updates.totalSpent !== undefined) updateFields.total_spent_c = updates.totalSpent;
 
       const params = {
-        records: [updateFields]
+        records: [formattedData]
       };
 
-      const response = await this.apperClient.updateRecord(this.tableName, params);
-      
+      const response = await apperClient.updateRecord(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
@@ -221,9 +185,9 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
       if (response.results) {
         const successfulUpdates = response.results.filter(result => result.success);
         const failedUpdates = response.results.filter(result => !result.success);
-        
+
         if (failedUpdates.length > 0) {
-          console.error(`Failed to update clients ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+          console.error(`Failed to update ${failedUpdates.length} client records:${JSON.stringify(failedUpdates)}`);
           
           failedUpdates.forEach(record => {
             record.errors?.forEach(error => {
@@ -232,34 +196,35 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
             if (record.message) toast.error(record.message);
           });
         }
-        
+
         if (successfulUpdates.length > 0) {
           toast.success('Client updated successfully');
           return successfulUpdates[0].data;
         }
       }
+
+      return null;
     } catch (error) {
-if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error updating client - check internet connection and API availability");
-        toast.error('Network error - check your connection');
-      } else if (error?.response?.data?.message) {
+      if (error?.response?.data?.message) {
         console.error("Error updating client:", error?.response?.data?.message);
-        toast.error('Invalid client ID format');
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error updating client:", error.message);
-        toast.error('Invalid client ID format');
+        console.error(error.message);
+        toast.error("Failed to update client");
       }
       return null;
     }
-  }
-  async deleteClient(id) {
+  },
+
+  delete: async (id) => {
     try {
+      const apperClient = getApperClient();
       const params = {
         RecordIds: [parseInt(id)]
       };
 
-      const response = await this.apperClient.deleteRecord(this.tableName, params);
-      
+      const response = await apperClient.deleteRecord(tableName, params);
+
       if (!response.success) {
         console.error(response.message);
         toast.error(response.message);
@@ -269,101 +234,34 @@ if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
       if (response.results) {
         const successfulDeletions = response.results.filter(result => result.success);
         const failedDeletions = response.results.filter(result => !result.success);
-        
+
         if (failedDeletions.length > 0) {
-          console.error(`Failed to delete clients ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+          console.error(`Failed to delete ${failedDeletions.length} client records:${JSON.stringify(failedDeletions)}`);
           
           failedDeletions.forEach(record => {
             if (record.message) toast.error(record.message);
           });
         }
-        
+
         if (successfulDeletions.length > 0) {
           toast.success('Client deleted successfully');
           return true;
         }
       }
-} catch (error) {
-      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-        console.error("Network error deleting client - check internet connection and API availability");
-        toast.error('Network error - check your connection');
-      } else if (error?.response?.data?.message) {
+
+      return false;
+    } catch (error) {
+      if (error?.response?.data?.message) {
         console.error("Error deleting client:", error?.response?.data?.message);
-        toast.error('Invalid client ID format');
+        toast.error(error?.response?.data?.message);
       } else {
-        console.error("Error deleting client:", error.message);
-        toast.error('Invalid client ID format');
+        console.error(error.message);
+        toast.error("Failed to delete client");
       }
       return false;
     }
   }
-
-  async getClientStats() {
-    try {
-      const clients = await this.getClients();
-      const totalClients = clients.length;
-      const activeClients = clients.filter(c => c.status === 'Active').length;
-      const totalRevenue = clients.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
-      const avgJobsPerClient = totalClients > 0 
-        ? clients.reduce((sum, c) => sum + (c.totalJobs || 0), 0) / totalClients 
-        : 0;
-      
-      return {
-        totalClients,
-        activeClients,
-        totalRevenue,
-        avgJobsPerClient: Math.round(avgJobsPerClient * 10) / 10
-      };
-    } catch (error) {
-      console.error("Error calculating client stats:", error.message);
-      return {
-        totalClients: 0,
-        activeClients: 0,
-        totalRevenue: 0,
-        avgJobsPerClient: 0
-      };
-    }
-  }
-
-  async searchClients(clients, query) {
-    if (!query || query.trim() === '') {
-      return clients;
-    }
-    
-    const searchTerm = query.toLowerCase();
-    return clients.filter(client => 
-      (client.name || '').toLowerCase().includes(searchTerm) ||
-      (client.email || '').toLowerCase().includes(searchTerm) ||
-      (client.company || '').toLowerCase().includes(searchTerm) ||
-      (client.phone || '').includes(searchTerm)
-    );
-  }
-}
-
-const clientService = new ClientService();
-
-// Export service methods for use in components
-export const getClients = () => clientService.getClients();
-export const getClientById = (id) => clientService.getClientById(id);
-export const createClient = (clientData) => clientService.createClient(clientData);
-export const updateClient = (id, updates) => clientService.updateClient(id, updates);
-export const deleteClient = (id) => clientService.deleteClient(id);
-export const getClientStats = () => clientService.getClientStats();
-export const searchClients = (clients, query) => clientService.searchClients(clients, query);
-export const filterClients = (status) => {
-  // This will be handled in the component level filtering
-  return Promise.resolve([]);
 };
 
-// Communication operations - these will be handled by a separate communication service
-export const getCommunicationsByClientId = (clientId) => {
-  // This should be moved to a separate communication service
-  return [];
-};
-
-export const addCommunication = (communication) => {
-  // This should be moved to a separate communication service
-  return Promise.resolve({ ...communication, Id: Date.now() });
-};
-// Review-related exports for ClientDetail integration
-export { getReviewsByClientId, createReview, updateReview, deleteReview } from '@/services/api/reviewService';
+export default clientService;
+export default clientService;
