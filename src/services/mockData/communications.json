@@ -1,0 +1,52 @@
+[
+  {
+    "Id": 1,
+    "clientId": 1,
+    "type": "email",
+    "subject": "Follow-up on HVAC Maintenance",
+    "message": "Hi Sarah, just following up on the HVAC maintenance we completed yesterday. Everything is running smoothly. Let us know if you have any concerns.",
+    "direction": "outbound",
+    "date": "2024-01-15T14:30:00Z",
+    "contactPerson": "John Smith"
+  },
+  {
+    "Id": 2,
+    "clientId": 1,
+    "type": "phone",
+    "subject": "Scheduling Next Service",
+    "message": "Called to schedule quarterly maintenance. Sarah confirmed next appointment for February 15th at 10 AM.",
+    "direction": "outbound",
+    "date": "2024-01-10T09:15:00Z",
+    "contactPerson": "Mike Johnson"
+  },
+  {
+    "Id": 3,
+    "clientId": 2,
+    "type": "email",
+    "subject": "Quote Request - Office Renovation",
+    "message": "Thank you for your interest in our services. Please find attached the detailed quote for your office renovation project.",
+    "direction": "outbound",
+    "date": "2024-01-12T09:15:00Z",
+    "contactPerson": "Sarah Wilson"
+  },
+  {
+    "Id": 4,
+    "clientId": 3,
+    "type": "email",
+    "subject": "Project Completion Confirmation",
+    "message": "Great working with you on the studio lighting project! All fixtures have been installed and tested. Invoice attached.",
+    "direction": "outbound",
+    "date": "2024-01-10T16:45:00Z",
+    "contactPerson": "Alex Brown"
+  },
+  {
+    "Id": 5,
+    "clientId": 3,
+    "type": "phone",
+    "subject": "Emergency Repair Request",
+    "message": "Emily called about urgent electrical issue in main studio. Scheduled emergency visit for same day at 2 PM.",
+    "direction": "inbound",
+    "date": "2024-01-05T11:30:00Z",
+    "contactPerson": "Emergency Dispatch"
+  }
+]
