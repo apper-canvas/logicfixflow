@@ -53,11 +53,11 @@ const Jobs = () => {
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(job =>
-        job.clientName.toLowerCase().includes(query) ||
-        job.serviceType.toLowerCase().includes(query) ||
-        job.address.toLowerCase().includes(query) ||
-        job.phone.includes(query)
+filtered = filtered.filter(job =>
+        (job.clientName || job.Name || '').toLowerCase().includes(query) ||
+        (job.serviceType || '').toLowerCase().includes(query) ||
+        (job.address || '').toLowerCase().includes(query) ||
+        (job.phone || '').includes(query)
       );
     }
 

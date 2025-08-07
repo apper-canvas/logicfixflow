@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { useSelector } from 'react-redux';
 import Button from "@/components/atoms/Button";
 import SearchBar from "@/components/molecules/SearchBar";
 import ApperIcon from "@/components/ApperIcon";
+import { AuthContext } from '../../App';
 
 const Header = ({ onMenuToggle, onQuickAdd }) => {
   const [searchQuery, setSearchQuery] = useState("");
-
+  const { logout } = useContext(AuthContext);
+  const { user } = useSelector((state) => state.user);
+  
   return (
     <header className="bg-white border-b border-slate-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -38,8 +42,20 @@ const Header = ({ onMenuToggle, onQuickAdd }) => {
           </Button>
           <div className="flex items-center gap-2 text-slate-600">
             <ApperIcon name="User" className="w-5 h-5" />
-            <span className="hidden sm:inline font-medium">John Contractor</span>
+            <span className="hidden sm:inline font-medium">
+              {user?.firstName ? `${user.firstName} ${user.lastName}` : 'User'}
+            </span>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={logout}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-800"
+            title="Logout"
+          >
+            <ApperIcon name="LogOut" className="w-5 h-5" />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
         </div>
       </div>
 

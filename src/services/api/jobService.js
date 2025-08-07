@@ -1,192 +1,371 @@
-import mockJobs from "@/services/mockData/jobs.json";
-
-// Simulate API delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { toast } from 'react-toastify';
 
 class JobService {
   constructor() {
-    this.jobs = [...mockJobs];
+    // Initialize ApperClient with Project ID and Public Key
+    const { ApperClient } = window.ApperSDK;
+    this.apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    this.tableName = 'job_c';
   }
 
-async getAll(filters = {}) {
-    await delay(300);
-    let filtered = [...this.jobs];
-    
-    // Filter by date range if provided
-    if (filters.startDate && filters.endDate) {
-      filtered = filtered.filter(job => {
-        const jobDate = new Date(job.scheduledDate);
-        return jobDate >= new Date(filters.startDate) && jobDate <= new Date(filters.endDate);
-      });
+  async getAll(filters = {}) {
+    try {
+      const params = {
+        fields: [
+          { field: { Name: "Id" } },
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "scheduled_date_c" } },
+          { field: { Name: "status_c" } },
+          { field: { Name: "estimated_cost_c" } },
+          { field: { Name: "estimated_duration_c" } },
+          { field: { Name: "services_c" } },
+          { field: { Name: "notes_c" } },
+          { field: { Name: "photos_c" } },
+          { field: { Name: "created_at_c" } },
+          { field: { Name: "updated_at_c" } },
+          { field: { Name: "price_c" } },
+          { field: { Name: "service_id_c" } }
+        ],
+        pagingInfo: {
+          limit: 100,
+          offset: 0
+        }
+      };
+
+      // Add filters if provided
+      if (filters.status) {
+        params.where = [{
+          FieldName: "status_c",
+          Operator: "EqualTo",
+          Values: [filters.status]
+        }];
+      }
+
+      const response = await this.apperClient.fetchRecords(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      // Transform data to match expected format
+      const transformedData = (response.data || []).map(job => ({
+        Id: job.Id,
+        clientName: job.Name || '',
+        phone: '',
+        address: '',
+        serviceType: job.service_id_c?.Name || '',
+        description: job.services_c || '',
+        scheduledDate: job.scheduled_date_c || new Date().toISOString(),
+        status: job.status_c || 'Scheduled',
+        price: job.price_c || job.estimated_cost_c || 0,
+        createdAt: job.created_at_c || new Date().toISOString(),
+        updatedAt: job.updated_at_c,
+        serviceId: job.service_id_c?.Id,
+        estimatedCost: job.estimated_cost_c || 0,
+        estimatedDuration: job.estimated_duration_c || 0,
+        services: job.services_c || '',
+        notes: job.notes_c ? JSON.parse(job.notes_c) : [],
+        photos: job.photos_c ? JSON.parse(job.photos_c) : []
+      }));
+
+      return transformedData;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching jobs:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return [];
     }
-    
-    // Filter by status if provided
-    if (filters.status) {
-      filtered = filtered.filter(job => job.status === filters.status);
-    }
-    
-    return filtered;
   }
 
   async getById(id) {
-    await delay(200);
-    const job = this.jobs.find(j => j.Id === parseInt(id));
-    if (!job) {
-      throw new Error("Job not found");
+    try {
+      const params = {
+        fields: [
+          { field: { Name: "Id" } },
+          { field: { Name: "Name" } },
+          { field: { Name: "Tags" } },
+          { field: { Name: "scheduled_date_c" } },
+          { field: { Name: "status_c" } },
+          { field: { Name: "estimated_cost_c" } },
+          { field: { Name: "estimated_duration_c" } },
+          { field: { Name: "services_c" } },
+          { field: { Name: "notes_c" } },
+          { field: { Name: "photos_c" } },
+          { field: { Name: "created_at_c" } },
+          { field: { Name: "updated_at_c" } },
+          { field: { Name: "price_c" } },
+          { field: { Name: "service_id_c" } }
+        ]
+      };
+
+      const response = await this.apperClient.getRecordById(this.tableName, parseInt(id), params);
+      
+      if (!response || !response.data) {
+        return null;
+      }
+
+      const job = response.data;
+      return {
+        Id: job.Id,
+        clientName: job.Name || '',
+        phone: '',
+        address: '',
+        serviceType: job.service_id_c?.Name || '',
+        description: job.services_c || '',
+        scheduledDate: job.scheduled_date_c || new Date().toISOString(),
+        status: job.status_c || 'Scheduled',
+        price: job.price_c || job.estimated_cost_c || 0,
+        createdAt: job.created_at_c || new Date().toISOString(),
+        updatedAt: job.updated_at_c,
+        serviceId: job.service_id_c?.Id,
+        estimatedCost: job.estimated_cost_c || 0,
+        estimatedDuration: job.estimated_duration_c || 0,
+        services: job.services_c || '',
+        notes: job.notes_c ? JSON.parse(job.notes_c) : [],
+        photos: job.photos_c ? JSON.parse(job.photos_c) : []
+      };
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error(`Error fetching job with ID ${id}:`, error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    return { ...job };
   }
 
-async create(jobData) {
-  await delay(400);
-  
-  // Calculate estimated cost and duration from service if provided
-  let estimatedCost = jobData.estimatedCost || null;
-  let estimatedDuration = jobData.estimatedDuration || null;
-  
-  if (jobData.serviceId && !estimatedCost) {
-    // Import service data to calculate estimates
-    const { getServiceById } = await import("@/services/api/serviceService");
-    const service = getServiceById(jobData.serviceId);
-    if (service) {
-      estimatedDuration = service.estimatedDuration;
-      if (service.pricingType === 'flat') {
-        estimatedCost = service.flatRate;
-      } else if (service.pricingType === 'hourly') {
-        estimatedCost = service.hourlyRate * (service.estimatedDuration || 1);
+  async create(jobData) {
+    try {
+      const params = {
+        records: [
+          {
+            Name: jobData.clientName || jobData.title || '',
+            Tags: jobData.tags || '',
+            scheduled_date_c: jobData.scheduledDate || new Date().toISOString(),
+            status_c: jobData.status || 'Scheduled',
+            estimated_cost_c: parseFloat(jobData.estimatedCost || jobData.price || 0),
+            estimated_duration_c: parseFloat(jobData.estimatedDuration || 0),
+            services_c: jobData.description || jobData.services || '',
+            notes_c: JSON.stringify(jobData.notes || []),
+            photos_c: JSON.stringify(jobData.photos || []),
+            created_at_c: new Date().toISOString(),
+            price_c: parseFloat(jobData.price || jobData.estimatedCost || 0),
+            service_id_c: jobData.serviceId ? parseInt(jobData.serviceId) : null
+          }
+        ]
+      };
+
+      const response = await this.apperClient.createRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
       }
+
+      if (response.results) {
+        const successfulRecords = response.results.filter(result => result.success);
+        const failedRecords = response.results.filter(result => !result.success);
+        
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create jobs ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          
+          failedRecords.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+        
+        return successfulRecords.length > 0 ? successfulRecords[0].data : null;
+      }
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error creating job:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
   }
-  
-  const newJob = {
-    ...jobData,
-    Id: Math.max(...this.jobs.map(j => j.Id)) + 1,
-    createdAt: new Date().toISOString(),
-    status: jobData.status || "Scheduled",
-    estimatedCost: jobData.price ? parseFloat(jobData.price) : estimatedCost,
-    estimatedDuration: estimatedDuration,
-    serviceId: jobData.serviceId || null,
-    services: jobData.services || [],
-    notes: [],
-    photos: []
-  };
-  this.jobs.push(newJob);
-  return { ...newJob };
-}
 
-async update(id, updateData) {
-    await delay(300);
-    const index = this.jobs.findIndex(j => j.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Job not found");
-    }
-    
-    // Validate scheduledDate if provided
-    if (updateData.scheduledDate) {
-      const date = new Date(updateData.scheduledDate);
-      if (isNaN(date.getTime())) {
-        throw new Error("Invalid scheduled date");
+  async update(id, updateData) {
+    try {
+      const updateFields = {
+        Id: parseInt(id)
+      };
+
+      // Only include updateable fields
+      if (updateData.clientName !== undefined) updateFields.Name = updateData.clientName;
+      if (updateData.tags !== undefined) updateFields.Tags = updateData.tags;
+      if (updateData.scheduledDate !== undefined) updateFields.scheduled_date_c = updateData.scheduledDate;
+      if (updateData.status !== undefined) updateFields.status_c = updateData.status;
+      if (updateData.estimatedCost !== undefined) updateFields.estimated_cost_c = parseFloat(updateData.estimatedCost);
+      if (updateData.estimatedDuration !== undefined) updateFields.estimated_duration_c = parseFloat(updateData.estimatedDuration);
+      if (updateData.services !== undefined || updateData.description !== undefined) {
+        updateFields.services_c = updateData.services || updateData.description || '';
       }
+      if (updateData.notes !== undefined) updateFields.notes_c = JSON.stringify(updateData.notes);
+      if (updateData.photos !== undefined) updateFields.photos_c = JSON.stringify(updateData.photos);
+      if (updateData.price !== undefined) updateFields.price_c = parseFloat(updateData.price);
+      if (updateData.serviceId !== undefined) updateFields.service_id_c = updateData.serviceId ? parseInt(updateData.serviceId) : null;
+
+      updateFields.updated_at_c = new Date().toISOString();
+
+      const params = {
+        records: [updateFields]
+      };
+
+      const response = await this.apperClient.updateRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+        
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update jobs ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+          
+          failedUpdates.forEach(record => {
+            record.errors?.forEach(error => {
+              toast.error(`${error.fieldLabel}: ${error.message}`);
+            });
+            if (record.message) toast.error(record.message);
+          });
+        }
+        
+        return successfulUpdates.length > 0 ? successfulUpdates[0].data : null;
+      }
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error updating job:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    
-    this.jobs[index] = {
-      ...this.jobs[index],
-      ...updateData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    return { ...this.jobs[index] };
   }
 
   async delete(id) {
-    await delay(300);
-    const index = this.jobs.findIndex(j => j.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error("Job not found");
+    try {
+      const params = {
+        RecordIds: [parseInt(id)]
+      };
+
+      const response = await this.apperClient.deleteRecord(this.tableName, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successfulDeletions = response.results.filter(result => result.success);
+        const failedDeletions = response.results.filter(result => !result.success);
+        
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete jobs ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+          
+          failedDeletions.forEach(record => {
+            if (record.message) toast.error(record.message);
+          });
+        }
+        
+        return successfulDeletions.length > 0;
+      }
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error deleting job:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return false;
     }
-    
-    const deletedJob = this.jobs.splice(index, 1)[0];
-    return { ...deletedJob };
-}
+  }
 
   // Notes management methods
   async addNote(jobId, noteText) {
-    await delay(300);
     const job = await this.getById(jobId);
     if (!job) throw new Error('Job not found');
     
     const newNote = {
-      Id: Date.now(), // Simple ID generation for notes
+      Id: Date.now(),
       text: noteText,
       createdAt: new Date().toISOString()
     };
     
-    if (!job.notes) job.notes = [];
-    job.notes.push(newNote);
-    
-    return await this.update(jobId, { notes: job.notes });
+    const updatedNotes = [...(job.notes || []), newNote];
+    return await this.update(jobId, { notes: updatedNotes });
   }
 
   async updateNote(jobId, noteId, noteText) {
-    await delay(300);
     const job = await this.getById(jobId);
     if (!job || !job.notes) throw new Error('Job or note not found');
     
     const noteIndex = job.notes.findIndex(note => note.Id === noteId);
     if (noteIndex === -1) throw new Error('Note not found');
     
-    job.notes[noteIndex] = {
-      ...job.notes[noteIndex],
+    const updatedNotes = [...job.notes];
+    updatedNotes[noteIndex] = {
+      ...updatedNotes[noteIndex],
       text: noteText,
       updatedAt: new Date().toISOString()
     };
     
-    return await this.update(jobId, { notes: job.notes });
+    return await this.update(jobId, { notes: updatedNotes });
   }
 
   async deleteNote(jobId, noteId) {
-    await delay(300);
     const job = await this.getById(jobId);
     if (!job || !job.notes) throw new Error('Job or note not found');
     
-    job.notes = job.notes.filter(note => note.Id !== noteId);
-    return await this.update(jobId, { notes: job.notes });
+    const updatedNotes = job.notes.filter(note => note.Id !== noteId);
+    return await this.update(jobId, { notes: updatedNotes });
   }
 
   // Photos management methods
   async addPhoto(jobId, photoData) {
-    await delay(500); // Simulate upload time
     const job = await this.getById(jobId);
     if (!job) throw new Error('Job not found');
     
     const newPhoto = {
-      Id: Date.now(), // Simple ID generation for photos
+      Id: Date.now(),
       name: photoData.name,
-      url: photoData.url, // In real app, this would be uploaded to storage
+      url: photoData.url,
       size: photoData.size,
       type: photoData.type,
       createdAt: new Date().toISOString()
     };
     
-    if (!job.photos) job.photos = [];
-    job.photos.push(newPhoto);
-    
-    return await this.update(jobId, { photos: job.photos });
+    const updatedPhotos = [...(job.photos || []), newPhoto];
+    return await this.update(jobId, { photos: updatedPhotos });
   }
 
   async deletePhoto(jobId, photoId) {
-    await delay(300);
     const job = await this.getById(jobId);
     if (!job || !job.photos) throw new Error('Job or photo not found');
     
-    job.photos = job.photos.filter(photo => photo.Id !== photoId);
-    return await this.update(jobId, { photos: job.photos });
-}
+    const updatedPhotos = job.photos.filter(photo => photo.Id !== photoId);
+    return await this.update(jobId, { photos: updatedPhotos });
+  }
 
-  // Print and Email estimate methods
+  // Print and Email estimate methods (keeping existing functionality)
   async printEstimate(estimateData) {
-    await delay(200);
-    
     const { selectedServices, estimate, totalDuration } = estimateData;
     const suggestedTotal = estimate * 1.15;
     
@@ -271,8 +450,6 @@ async update(id, updateData) {
   }
 
   async emailEstimate(estimateData) {
-    await delay(200);
-    
     const { selectedServices, estimate, totalDuration } = estimateData;
     const suggestedTotal = estimate * 1.15;
     

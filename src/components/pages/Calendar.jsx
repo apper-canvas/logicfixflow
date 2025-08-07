@@ -57,10 +57,10 @@ const JobCard = ({ job, onUpdate }) => {
       className={`calendar-job-card p-2 mb-1 border rounded cursor-move text-xs ${serviceColorClass} ${
         isDragging ? 'opacity-50' : 'hover:shadow-sm'
       }`}
-    >
-      <div className="font-medium truncate">{job.clientName}</div>
+>
+      <div className="font-medium truncate">{job.clientName || job.Name}</div>
       <div className="text-xs opacity-75 truncate">{job.serviceType}</div>
-      <div className="text-xs opacity-75">{format(parseISO(job.scheduledDate), 'HH:mm')}</div>
+      <div className="text-xs opacity-75">{format(parseISO(job.scheduledDate || job.scheduled_date_c), 'HH:mm')}</div>
     </div>
   );
 };
@@ -77,8 +77,8 @@ const TimeSlot = ({ date, hour, jobs, onJobDrop, view }) => {
     }),
   });
 
-  const slotJobs = jobs.filter(job => {
-    const jobDate = parseISO(job.scheduledDate);
+const slotJobs = jobs.filter(job => {
+    const jobDate = parseISO(job.scheduledDate || job.scheduled_date_c);
     return isSameDay(jobDate, date) && jobDate.getHours() === hour;
   });
 
@@ -108,7 +108,7 @@ const DayCell = ({ date, jobs, onJobDrop, isCurrentMonth, view }) => {
     }),
   });
 
-  const dayJobs = jobs.filter(job => isSameDay(parseISO(job.scheduledDate), date));
+const dayJobs = jobs.filter(job => isSameDay(parseISO(job.scheduledDate || job.scheduled_date_c), date));
 
   return (
     <div

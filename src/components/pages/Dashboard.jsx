@@ -43,8 +43,8 @@ const Dashboard = () => {
   const calculateMetrics = () => {
     const today = new Date();
     
-    const todaysJobs = jobs.filter(job => 
-      isToday(new Date(job.scheduledDate))
+const todaysJobs = jobs.filter(job => 
+      isToday(new Date(job.scheduledDate || job.scheduled_date_c))
     ).length;
 
     const pendingEstimates = jobs.filter(job => 
@@ -68,9 +68,9 @@ const Dashboard = () => {
     };
   };
 
-  const getTodaysJobs = () => {
+const getTodaysJobs = () => {
     return jobs.filter(job => 
-      isToday(new Date(job.scheduledDate))
+      isToday(new Date(job.scheduledDate || job.scheduled_date_c))
     ).slice(0, 3);
   };
 

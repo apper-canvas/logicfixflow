@@ -48,13 +48,13 @@ const JobFormModal = ({ isOpen, onClose, job = null }) => {
 
   useEffect(() => {
     if (job) {
-      setFormData({
-        clientName: job.clientName || "",
+setFormData({
+        clientName: job.clientName || job.Name || "",
         phone: job.phone || "",
         address: job.address || "",
         serviceType: job.serviceType || "",
         serviceId: job.serviceId || "",
-        description: job.description || "",
+        description: job.description || job.services || "",
         scheduledDate: job.scheduledDate ? format(new Date(job.scheduledDate), "yyyy-MM-dd") : "",
         price: job.price || ""
       });
