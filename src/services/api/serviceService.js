@@ -411,6 +411,10 @@ delete: async (id) => {
 };
 
 // Named exports for individual functions
+export const getServicesByCategory = serviceService.getServicesByCategory;
+export const createService = serviceService.createService;
+export const updateService = serviceService.updateService;
+export const deleteService = serviceService.deleteService;
 export const searchServices = serviceService.searchServices;
 
 export default serviceService;
