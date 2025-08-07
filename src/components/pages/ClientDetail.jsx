@@ -9,6 +9,7 @@ import Empty from '@/components/ui/Empty';
 import ApperIcon from '@/components/ApperIcon';
 import ClientFormModal from '@/components/organisms/ClientFormModal';
 import CommunicationModal from '@/components/organisms/CommunicationModal';
+import ReviewCard from '@/components/molecules/ReviewCard';
 import { 
   getClientById, 
   updateClient, 
@@ -22,8 +23,9 @@ const ClientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  const [client, setClient] = useState(null);
+const [client, setClient] = useState(null);
   const [communications, setCommunications] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -33,7 +35,7 @@ const ClientDetail = () => {
     loadClientData();
   }, [id]);
 
-  const loadClientData = async () => {
+const loadClientData = async () => {
     try {
       setIsLoading(true);
       
@@ -44,9 +46,12 @@ const ClientDetail = () => {
       }
       
       const commData = getCommunicationsByClientId(id);
+      const { getReviewsByClientId } = await import('@/services/api/reviewService');
+      const reviewsData = getReviewsByClientId(parseInt(id));
       
       setClient(clientData);
       setCommunications(commData);
+      setReviews(reviewsData);
       setError(null);
     } catch (err) {
       setError('Failed to load client data');
@@ -70,13 +75,19 @@ const ClientDetail = () => {
     }
   };
 
-  const handleAddCommunication = async (communicationData) => {
+const handleAddCommunication = async (communicationData) => {
     addCommunication(communicationData);
     await loadClientData();
   };
 
   const getInitials = (name) => {
     return name.split(' ').map(part => part[0]).join('').toUpperCase();
+  };
+
+  const calculateAverageRating = (reviews) => {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return (total / reviews.length).toFixed(1);
   };
 
   const getStatusColor = (status) => {
@@ -297,6 +308,52 @@ const ClientDetail = () => {
         </div>
       </div>
 
+{/* Reviews Section */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-xl font-semibold text-slate-900 font-display">
+              Customer Reviews
+            </h2>
+            {reviews.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <ApperIcon
+                      key={star}
+                      name="Star"
+                      size={16}
+                      className={`${
+                        star <= Math.round(parseFloat(calculateAverageRating(reviews)))
+                          ? 'text-yellow-400 fill-current'
+                          : 'text-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-slate-600">
+                  {calculateAverageRating(reviews)} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {reviews.length === 0 ? (
+          <Empty
+            title="No Reviews Yet"
+            description="Reviews from completed jobs will appear here"
+            icon="Star"
+          />
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <ReviewCard key={review.Id} review={review} />
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* Communication History */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
@@ -366,7 +423,7 @@ const ClientDetail = () => {
         )}
       </Card>
 
-      {/* Modals */}
+{/* Modals */}
       <ClientFormModal
         client={client}
         isOpen={showEditModal}

@@ -112,7 +112,6 @@ export const addCommunication = (communication) => {
   toast.success('Communication logged successfully');
   return { ...newComm };
 };
-
 // Search and filter operations
 export const searchClients = (query) => {
   if (!query || query.trim() === '') {
@@ -152,3 +151,6 @@ export const getClientStats = () => {
     avgJobsPerClient: Math.round(avgJobsPerClient * 10) / 10
   };
 };
+
+// Review-related exports for ClientDetail integration
+export { getReviewsByClientId, createReview, updateReview, deleteReview } from '@/services/api/reviewService';
