@@ -315,7 +315,7 @@ return [];
     }
   },
 
-  delete: async (id) => {
+delete: async (id) => {
     try {
       const apperClient = getApperClient();
       const params = {
@@ -358,6 +358,54 @@ return [];
         toast.error("Failed to delete service");
       }
       return false;
+    }
+  },
+
+  // Search services by name or category
+  searchServices: async (searchTerm) => {
+    try {
+      const apperClient = getApperClient();
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "category_c" } },
+          { field: { Name: "description_c" } },
+          { field: { Name: "pricing_type_c" } },
+          { field: { Name: "hourly_rate_c" } },
+          { field: { Name: "flat_rate_c" } },
+          { field: { Name: "estimated_duration_c" } },
+          { field: { Name: "is_active_c" } }
+        ],
+        where: [
+          {
+            FieldName: "Name",
+            Operator: "Contains",
+            Values: [searchTerm],
+            Include: true
+          }
+        ],
+        orderBy: [
+          {
+            fieldName: "Name",
+            sorttype: "ASC"
+          }
+        ]
+      };
+
+      const response = await apperClient.fetchRecords(tableName, params);
+
+      if (!response || !response.data || response.data.length === 0) {
+        return [];
+      } else {
+        return response.data;
+      }
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error searching services:", error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return [];
     }
   }
 };
