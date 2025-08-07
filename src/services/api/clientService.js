@@ -264,10 +264,6 @@ export const clientService = {
 };
 
 // Named exports for individual methods
-export const getClients = clientService.getClients;
-export const createClient = clientService.createClient;
-export const updateClient = clientService.updateClient;
-export const deleteClient = clientService.deleteClient;
 // Named exports for individual methods
 export const getClients = clientService.getAll;
 export const getClientById = clientService.getById;
