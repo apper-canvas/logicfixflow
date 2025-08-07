@@ -267,4 +267,9 @@ export const jobService = {
   }
 };
 
+// Named exports for individual methods
+export const create = jobService.create;
+export const printEstimate = jobService.printEstimate;
+export const emailEstimate = jobService.emailEstimate;
+
 export default jobService;
