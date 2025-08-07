@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { format } from "date-fns";
 import JobNotesPhotos from "./JobNotesPhotos";
 import { jobService } from "@/services/api/jobService";
-import { getServices } from "@/services/api/serviceService";
+import { serviceService } from "@/services/api/serviceService";
 import ApperIcon from "@/components/ApperIcon";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
@@ -26,12 +26,12 @@ const JobFormModal = ({ isOpen, onClose, job = null }) => {
   const [servicesLoading, setServicesLoading] = useState(false);
 
   // Fetch services on component mount
-  useEffect(() => {
+useEffect(() => {
     const fetchServices = async () => {
       setServicesLoading(true);
       try {
-        const serviceData = getServices();
-        const activeServices = serviceData.filter(service => service.isActive);
+        const serviceData = await serviceService.getAll();
+        const activeServices = serviceData.filter(service => service.is_active_c);
         setServices(activeServices);
       } catch (error) {
         toast.error("Failed to load services");
