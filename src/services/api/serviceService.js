@@ -40,6 +40,22 @@ const formatServiceForSubmission = (serviceData) => {
   };
 };
 
+export const getServiceCategories = () => {
+  return [
+    'Plumbing',
+    'Electrical', 
+    'Carpentry',
+    'Painting',
+    'HVAC',
+    'Roofing',
+    'Flooring',
+    'Drywall',
+    'Landscaping',
+    'Appliance Repair',
+    'General Repair'
+  ];
+};
+
 export const getServicesByCategory = async (category) => {
   const apperClient = getApperClient();
   const params = {
@@ -85,7 +101,6 @@ export const getServicesByCategory = async (category) => {
     return [];
   }
 };
-
 export const serviceService = {
   getAll: async () => {
     try {
