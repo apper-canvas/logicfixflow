@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
-import MetricCard from "@/components/molecules/MetricCard";
+import React, { useEffect, useState } from "react";
+import RevenueChart from "@/components/molecules/RevenueChart";
+import { jobService } from "@/services/api/jobService";
+import { format, isToday } from "date-fns";
+import ApperIcon from "@/components/ApperIcon";
 import JobCard from "@/components/molecules/JobCard";
+import MetricCard from "@/components/molecules/MetricCard";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import { jobService } from "@/services/api/jobService";
-import { format, isToday } from "date-fns";
-
+import Card from "@/components/atoms/Card";
 const Dashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -114,10 +116,30 @@ const Dashboard = () => {
           value={`$${metrics.monthlyEarnings.toLocaleString()}`}
           icon="TrendingUp"
           color="slate"
-          trend="+12%"
+trend="+12%"
         />
       </div>
 
+      {/* Revenue Chart Section */}
+      <div className="mb-8">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Revenue Trend</h3>
+              <p className="text-sm text-slate-600">Last 6 months performance</p>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <ApperIcon name="TrendingUp" size={16} />
+              <span>+12% from last period</span>
+            </div>
+          </div>
+          <div className="h-64">
+            <RevenueChart jobs={jobs} />
+          </div>
+        </Card>
+      </div>
+
+      {/* Today's Jobs Section */}
       {/* Today's Jobs Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
