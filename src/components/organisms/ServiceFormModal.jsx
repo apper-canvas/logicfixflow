@@ -69,9 +69,9 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, service = null }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+<div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-slate-900 font-display">
-              {service ? 'Edit Service' : 'Add New Service'}
+              {service ? 'Edit Skill' : 'Add New Skill'}
             </h2>
             <Button
               variant="ghost"
@@ -84,16 +84,16 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, service = null }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Service Name *
+                  Skill Name *
                 </label>
                 <Input
                   name="name"
                   value={formData.name}
-                  onChange={handleChange}
-                  placeholder="e.g., Faucet Repair"
+onChange={handleChange}
+                  placeholder="e.g., Faucet Repair, Drywall Installation"
                   required
                 />
               </div>
@@ -128,9 +128,9 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, service = null }) => {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
+rows={3}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Describe what this service includes..."
-                required
+                placeholder="Describe what this skill includes and your experience level..."
               />
             </div>
 

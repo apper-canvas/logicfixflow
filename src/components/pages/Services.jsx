@@ -152,7 +152,7 @@ loadServices();
 </Button>
 <Button onClick={handleAddService} className="shrink-0">
   <ApperIcon name="Plus" size={16} className="mr-2" />
-  Add Service
+  Add Skill
 </Button>
 </div>
       </div>

@@ -5,9 +5,15 @@ let nextId = Math.max(...services.map(s => s.Id)) + 1;
 
 const serviceCategories = [
   'Plumbing',
-  'Electrical',
+  'Electrical', 
   'Carpentry',
   'Painting',
+  'HVAC',
+  'Roofing',
+  'Flooring',
+  'Drywall',
+  'Landscaping',
+  'Appliance Repair',
   'General Repair'
 ];
 
