@@ -50,7 +50,7 @@ const formatJobForSubmission = (jobData) => {
 };
 
 export const jobService = {
-  getAll: async () => {
+getAll: async () => {
     try {
       const apperClient = getApperClient();
       const params = {
@@ -75,13 +75,43 @@ export const jobService = {
         return [];
       }
 
-      return response.data || [];
+      // Validate and parse response data
+      if (!response.data) {
+        console.error("No data received from API");
+        toast.error("No data received from server");
+        return [];
+      }
+
+      // Handle case where response.data is a string that needs parsing
+      let parsedData = response.data;
+      if (typeof response.data === 'string') {
+        try {
+          parsedData = JSON.parse(response.data);
+        } catch (parseError) {
+          console.error("Failed to parse JSON response:", parseError.message);
+          console.error("Raw response data:", response.data.substring(0, 200) + "...");
+          toast.error("Invalid data format received from server");
+          return [];
+        }
+      }
+
+      // Ensure we have an array
+      if (!Array.isArray(parsedData)) {
+        console.error("Expected array but received:", typeof parsedData);
+        toast.error("Unexpected data format received from server");
+        return [];
+      }
+
+      return parsedData;
     } catch (error) {
       if (error?.response?.data?.message) {
         console.error("Error fetching jobs:", error?.response?.data?.message);
         toast.error(error?.response?.data?.message);
+      } else if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+        console.error("JSON parsing error:", error.message);
+        toast.error("Server returned invalid data format");
       } else {
-        console.error(error.message);
+        console.error("Error fetching jobs:", error.message);
         toast.error("Failed to fetch jobs");
       }
       return [];
