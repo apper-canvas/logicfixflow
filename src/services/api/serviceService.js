@@ -1,4 +1,6 @@
 import { toast } from "react-toastify";
+import React from "react";
+import Error from "@/components/ui/Error";
 const tableName = 'service_c';
 
 // Initialize ApperClient
@@ -38,6 +40,52 @@ const formatServiceForSubmission = (serviceData) => {
   };
 };
 
+export const getServicesByCategory = async (category) => {
+  const apperClient = getApperClient();
+  const params = {
+    fields: serviceFields,
+    where: [
+      {
+        FieldName: "category_c",
+        Operator: "EqualTo",
+        Values: [category],
+        Include: true
+      }
+    ],
+    orderBy: [
+      {
+        fieldName: "Name",
+        sorttype: "ASC"
+      }
+    ],
+    pagingInfo: {
+      limit: 50,
+      offset: 0
+    }
+  };
+
+  try {
+    const response = await apperClient.fetchRecords(tableName, params);
+
+    if (!response.success) {
+      console.error(response.message);
+      toast.error(response.message);
+      return [];
+    }
+
+    return response.data || [];
+  } catch (error) {
+    if (error?.response?.data?.message) {
+      console.error("Error fetching services by category:", error?.response?.data?.message);
+      toast.error(error?.response?.data?.message);
+    } else {
+      console.error(error.message);
+      toast.error("Failed to fetch services by category");
+    }
+    return [];
+  }
+};
+
 export const serviceService = {
   getAll: async () => {
     try {
@@ -74,6 +122,52 @@ export const serviceService = {
         toast.error("Failed to fetch services");
       }
       return [];
+    }
+},
+
+  getServicesByCategory: async (category) => {
+    try {
+      const apperClient = getApperClient();
+      const params = {
+        fields: serviceFields,
+        where: [
+          {
+            FieldName: "category_c",
+            Operator: "EqualTo",
+            Values: [category],
+            Include: true
+          }
+        ],
+        orderBy: [
+          {
+            fieldName: "Name",
+            sorttype: "ASC"
+          }
+        ],
+        pagingInfo: {
+          limit: 50,
+          offset: 0
+        }
+      };
+
+      const response = await apperClient.fetchRecords(tableName, params);
+
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+
+      return response.data || [];
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching services by category:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to fetch services by category");
+      }
+return [];
     }
   },
 
