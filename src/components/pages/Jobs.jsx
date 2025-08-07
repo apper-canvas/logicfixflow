@@ -5,6 +5,7 @@ import SearchBar from "@/components/molecules/SearchBar";
 import FilterBar from "@/components/molecules/FilterBar";
 import JobCard from "@/components/molecules/JobCard";
 import JobFormModal from "@/components/organisms/JobFormModal";
+import JobNotesPhotos from "@/components/organisms/JobNotesPhotos";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
@@ -20,6 +21,8 @@ const Jobs = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [isNotesPhotosOpen, setIsNotesPhotosOpen] = useState(false);
+  const [selectedJobForNotes, setSelectedJobForNotes] = useState(null);
 
   const loadJobs = async () => {
     try {
@@ -91,9 +94,20 @@ const Jobs = () => {
     loadJobs(); // Refresh data when modal closes
   };
 
-  const handleCreateJob = () => {
+const handleCreateJob = () => {
     setEditingJob(null);
     setIsJobFormOpen(true);
+  };
+
+  const handleViewNotesPhotos = (job) => {
+    setSelectedJobForNotes(job);
+    setIsNotesPhotosOpen(true);
+  };
+
+  const handleCloseNotesPhotos = () => {
+    setIsNotesPhotosOpen(false);
+    setSelectedJobForNotes(null);
+    loadJobs(); // Refresh data when closing notes/photos
   };
 
   if (loading) return <Loading type="jobs" />;
@@ -163,23 +177,56 @@ const Jobs = () => {
             Showing {filteredJobs.length} of {jobs.length} jobs
           </div>
           
-          {filteredJobs.map((job) => (
+{filteredJobs.map((job) => (
             <JobCard
               key={job.Id}
               job={job}
               onEdit={handleEditJob}
               onStatusChange={handleStatusChange}
+              onViewNotesPhotos={handleViewNotesPhotos}
             />
           ))}
         </div>
       )}
 
-      {isJobFormOpen && (
+{isJobFormOpen && (
         <JobFormModal
           isOpen={isJobFormOpen}
           onClose={handleCloseModal}
           job={editingJob}
         />
+      )}
+
+      {isNotesPhotosOpen && selectedJobForNotes && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    Notes & Photos
+                  </h2>
+                  <p className="text-slate-600 mt-1">
+                    {selectedJobForNotes.clientName} - {selectedJobForNotes.serviceType}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={handleCloseNotesPhotos}
+                  className="p-2"
+                >
+                  <ApperIcon name="X" size={20} />
+                </Button>
+              </div>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <JobNotesPhotos
+                jobId={selectedJobForNotes.Id}
+                onClose={handleCloseNotesPhotos}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -82,6 +82,80 @@ async update(id, updateData) {
     
     const deletedJob = this.jobs.splice(index, 1)[0];
     return { ...deletedJob };
+}
+
+  // Notes management methods
+  async addNote(jobId, noteText) {
+    await delay(300);
+    const job = await this.getById(jobId);
+    if (!job) throw new Error('Job not found');
+    
+    const newNote = {
+      Id: Date.now(), // Simple ID generation for notes
+      text: noteText,
+      createdAt: new Date().toISOString()
+    };
+    
+    if (!job.notes) job.notes = [];
+    job.notes.push(newNote);
+    
+    return await this.update(jobId, { notes: job.notes });
+  }
+
+  async updateNote(jobId, noteId, noteText) {
+    await delay(300);
+    const job = await this.getById(jobId);
+    if (!job || !job.notes) throw new Error('Job or note not found');
+    
+    const noteIndex = job.notes.findIndex(note => note.Id === noteId);
+    if (noteIndex === -1) throw new Error('Note not found');
+    
+    job.notes[noteIndex] = {
+      ...job.notes[noteIndex],
+      text: noteText,
+      updatedAt: new Date().toISOString()
+    };
+    
+    return await this.update(jobId, { notes: job.notes });
+  }
+
+  async deleteNote(jobId, noteId) {
+    await delay(300);
+    const job = await this.getById(jobId);
+    if (!job || !job.notes) throw new Error('Job or note not found');
+    
+    job.notes = job.notes.filter(note => note.Id !== noteId);
+    return await this.update(jobId, { notes: job.notes });
+  }
+
+  // Photos management methods
+  async addPhoto(jobId, photoData) {
+    await delay(500); // Simulate upload time
+    const job = await this.getById(jobId);
+    if (!job) throw new Error('Job not found');
+    
+    const newPhoto = {
+      Id: Date.now(), // Simple ID generation for photos
+      name: photoData.name,
+      url: photoData.url, // In real app, this would be uploaded to storage
+      size: photoData.size,
+      type: photoData.type,
+      createdAt: new Date().toISOString()
+    };
+    
+    if (!job.photos) job.photos = [];
+    job.photos.push(newPhoto);
+    
+    return await this.update(jobId, { photos: job.photos });
+  }
+
+  async deletePhoto(jobId, photoId) {
+    await delay(300);
+    const job = await this.getById(jobId);
+    if (!job || !job.photos) throw new Error('Job or photo not found');
+    
+    job.photos = job.photos.filter(photo => photo.Id !== photoId);
+    return await this.update(jobId, { photos: job.photos });
   }
 }
 
