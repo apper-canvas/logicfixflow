@@ -8,9 +8,24 @@ class JobService {
     this.jobs = [...mockJobs];
   }
 
-  async getAll() {
+async getAll(filters = {}) {
     await delay(300);
-    return [...this.jobs];
+    let filtered = [...this.jobs];
+    
+    // Filter by date range if provided
+    if (filters.startDate && filters.endDate) {
+      filtered = filtered.filter(job => {
+        const jobDate = new Date(job.scheduledDate);
+        return jobDate >= new Date(filters.startDate) && jobDate <= new Date(filters.endDate);
+      });
+    }
+    
+    // Filter by status if provided
+    if (filters.status) {
+      filtered = filtered.filter(job => job.status === filters.status);
+    }
+    
+    return filtered;
   }
 
   async getById(id) {
@@ -34,11 +49,19 @@ class JobService {
     return { ...newJob };
   }
 
-  async update(id, updateData) {
+async update(id, updateData) {
     await delay(300);
     const index = this.jobs.findIndex(j => j.Id === parseInt(id));
     if (index === -1) {
       throw new Error("Job not found");
+    }
+    
+    // Validate scheduledDate if provided
+    if (updateData.scheduledDate) {
+      const date = new Date(updateData.scheduledDate);
+      if (isNaN(date.getTime())) {
+        throw new Error("Invalid scheduled date");
+      }
     }
     
     this.jobs[index] = {
@@ -61,5 +84,16 @@ class JobService {
     return { ...deletedJob };
   }
 }
+
+// Calendar-specific helper methods
+export const calendarService = {
+  async getJobsForDateRange(startDate, endDate) {
+    return await jobService.getAll({ startDate, endDate });
+  },
+  
+  async rescheduleJob(jobId, newDate) {
+    return await jobService.update(jobId, { scheduledDate: newDate.toISOString() });
+  }
+};
 
 export const jobService = new JobService();

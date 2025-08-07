@@ -35,3 +35,78 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
 }
+
+/* Calendar Styles */
+.calendar-grid {
+  @apply border border-gray-300 rounded-lg overflow-hidden;
+}
+
+.calendar-day-cell {
+  @apply transition-colors duration-150;
+}
+
+.calendar-day-cell:hover {
+  @apply bg-gray-50;
+}
+
+.calendar-time-slot {
+  @apply transition-colors duration-150;
+}
+
+.calendar-time-slot:hover {
+  @apply bg-gray-50;
+}
+
+.calendar-job-card {
+  @apply transition-all duration-150 transform;
+}
+
+.calendar-job-card:hover {
+  @apply scale-105 shadow-md z-10;
+}
+
+.calendar-job-card:active {
+  @apply scale-95;
+}
+
+/* Drag and Drop Animations */
+.calendar-job-card[data-dragging="true"] {
+  @apply opacity-50 rotate-2 shadow-lg;
+}
+
+.calendar-day-cell[data-drop-target="true"] {
+  @apply bg-primary-100 border-primary-300;
+}
+
+.calendar-time-slot[data-drop-target="true"] {
+  @apply bg-primary-100 border-primary-300;
+}
+
+/* Responsive Calendar */
+@media (max-width: 768px) {
+  .calendar-grid {
+    @apply text-xs;
+  }
+  
+  .calendar-day-cell {
+    @apply min-h-20 p-1;
+  }
+  
+  .calendar-time-slot {
+    @apply min-h-12 p-1;
+  }
+  
+  .calendar-job-card {
+    @apply p-1 text-xs;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendar-day-cell {
+    @apply min-h-16;
+  }
+  
+  .calendar-job-card {
+    @apply mb-0.5;
+  }
+}
